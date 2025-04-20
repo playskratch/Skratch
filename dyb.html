@@ -112,19 +112,31 @@
     let userMarker = null;
     let greenMarker = null;
     let holeLine = null;
+    let fairway = null;
 
     const greens = {}; // stores saved green centers
 
     const holeLayouts = {
-      "1": { tee: { lat: 53.39685, lng: -2.22435 }, green: { lat: 53.39790, lng: -2.22475 } },
-      "2": { tee: { lat: 53.39805, lng: -2.22470 }, green: { lat: 53.39885, lng: -2.22610 } },
-      "3": { tee: { lat: 53.39890, lng: -2.22610 }, green: { lat: 53.39965, lng: -2.22540 } },
-      "4": { tee: { lat: 53.39965, lng: -2.22540 }, green: { lat: 53.39880, lng: -2.22400 } },
-      "5": { tee: { lat: 53.39880, lng: -2.22400 }, green: { lat: 53.39805, lng: -2.22270 } },
-      "6": { tee: { lat: 53.39800, lng: -2.22270 }, green: { lat: 53.39695, lng: -2.22290 } },
-      "7": { tee: { lat: 53.39695, lng: -2.22290 }, green: { lat: 53.39610, lng: -2.22380 } },
-      "8": { tee: { lat: 53.39610, lng: -2.22380 }, green: { lat: 53.39680, lng: -2.22510 } },
-      "9": { tee: { lat: 53.39680, lng: -2.22510 }, green: { lat: 53.39685, lng: -2.22435 } }
+      "1": {
+        tee: { lat: 53.39685, lng: -2.22435 },
+        green: { lat: 53.39790, lng: -2.22475 },
+        fairway: [
+          [53.39685, -2.22435],
+          [53.39725, -2.22450],
+          [53.39760, -2.22460],
+          [53.39790, -2.22475]
+        ]
+      },
+      "2": {
+        tee: { lat: 53.39805, lng: -2.22470 },
+        green: { lat: 53.39885, lng: -2.22610 },
+        fairway: [
+          [53.39805, -2.22470],
+          [53.39830, -2.22500],
+          [53.39860, -2.22550],
+          [53.39885, -2.22610]
+        ]
+      }
     };
 
     function getDistance(lat1, lon1, lat2, lon2) {
@@ -157,15 +169,23 @@
       if (!holeLayouts[hole]) return;
 
       if (holeLine) map.removeLayer(holeLine);
+      if (fairway) map.removeLayer(fairway);
 
-      const { tee, green } = holeLayouts[hole];
+      const { tee, green, fairway: fairwayCoords } = holeLayouts[hole];
       holeLine = L.polyline([ [tee.lat, tee.lng], [green.lat, green.lng] ], {
         color: '#2d6a4f', weight: 4, dashArray: '6 4'
       }).addTo(map);
 
+      if (fairwayCoords) {
+        fairway = L.polygon(fairwayCoords, {
+          color: '#74c69d',
+          weight: 1,
+          fillOpacity: 0.3
+        }).addTo(map);
+      }
+
       map.fitBounds(holeLine.getBounds(), { padding: [20, 20] });
 
-      // Auto-load green if not already saved
       if (!greens[hole]) greens[hole] = green;
       updateDistance(currentPosition?.coords.latitude, currentPosition?.coords.longitude);
     }
