@@ -95,6 +95,7 @@
   </select>
 
   <button onclick="saveGreenCenter()">📍 Save Green Center</button>
+  <button onclick="downloadGreenCenters()">📤 Export Green Centers</button>
 
   <div id="distanceDisplay">Distance: --</div>
 
@@ -152,8 +153,18 @@
         lng: currentPosition.coords.longitude
       };
 
-      console.log(`Hole ${hole} green center saved:`, greens[hole]);
       alert(`Saved green center for Hole ${hole}`);
+    }
+
+    function downloadGreenCenters() {
+      const dataStr = JSON.stringify(greens, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cheadle_green_centers.json";
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
     let currentPosition = null;
