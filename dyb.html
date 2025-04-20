@@ -81,7 +81,7 @@
 
   <div id="map"></div>
 
-  <select id="holeSelect">
+  <select id="holeSelect" onchange="showHoleLayout()">
     <option value="">-- Select Hole --</option>
     <option value="1">Hole 1</option>
     <option value="2">Hole 2</option>
@@ -111,8 +111,21 @@
 
     let userMarker = null;
     let greenMarker = null;
+    let holeLine = null;
 
-    const greens = {}; // will be populated as you record
+    const greens = {}; // stores saved green centers
+
+    const holeLayouts = {
+      "1": { tee: { lat: 53.39685, lng: -2.22435 }, green: { lat: 53.39790, lng: -2.22475 } },
+      "2": { tee: { lat: 53.39805, lng: -2.22470 }, green: { lat: 53.39885, lng: -2.22610 } },
+      "3": { tee: { lat: 53.39890, lng: -2.22610 }, green: { lat: 53.39965, lng: -2.22540 } },
+      "4": { tee: { lat: 53.39965, lng: -2.22540 }, green: { lat: 53.39880, lng: -2.22400 } },
+      "5": { tee: { lat: 53.39880, lng: -2.22400 }, green: { lat: 53.39805, lng: -2.22270 } },
+      "6": { tee: { lat: 53.39800, lng: -2.22270 }, green: { lat: 53.39695, lng: -2.22290 } },
+      "7": { tee: { lat: 53.39695, lng: -2.22290 }, green: { lat: 53.39610, lng: -2.22380 } },
+      "8": { tee: { lat: 53.39610, lng: -2.22380 }, green: { lat: 53.39680, lng: -2.22510 } },
+      "9": { tee: { lat: 53.39680, lng: -2.22510 }, green: { lat: 53.39685, lng: -2.22435 } }
+    };
 
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371e3;
@@ -121,13 +134,9 @@
       const φ2 = toRad(lat2);
       const Δφ = toRad(lat2 - lat1);
       const Δλ = toRad(lon2 - lon1);
-
-      const a = Math.sin(Δφ / 2) ** 2 +
-                Math.cos(φ1) * Math.cos(φ2) *
-                Math.sin(Δλ / 2) ** 2;
+      const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-      return R * c; // meters
+      return R * c;
     }
 
     function updateDistance(userLat, userLng) {
@@ -143,16 +152,32 @@
       greenMarker = L.marker([green.lat, green.lng], { title: `Green Center (Hole ${hole})` }).addTo(map);
     }
 
+    function showHoleLayout() {
+      const hole = document.getElementById('holeSelect').value;
+      if (!holeLayouts[hole]) return;
+
+      if (holeLine) map.removeLayer(holeLine);
+
+      const { tee, green } = holeLayouts[hole];
+      holeLine = L.polyline([ [tee.lat, tee.lng], [green.lat, green.lng] ], {
+        color: '#2d6a4f', weight: 4, dashArray: '6 4'
+      }).addTo(map);
+
+      map.fitBounds(holeLine.getBounds(), { padding: [20, 20] });
+
+      // Auto-load green if not already saved
+      if (!greens[hole]) greens[hole] = green;
+      updateDistance(currentPosition?.coords.latitude, currentPosition?.coords.longitude);
+    }
+
     function saveGreenCenter() {
       if (!currentPosition) return alert('Waiting for GPS...');
       const hole = document.getElementById('holeSelect').value;
       if (!hole) return alert('Select a hole first.');
-      
       greens[hole] = {
         lat: currentPosition.coords.latitude,
         lng: currentPosition.coords.longitude
       };
-
       alert(`Saved green center for Hole ${hole}`);
     }
 
@@ -168,7 +193,6 @@
     }
 
     let currentPosition = null;
-
     navigator.geolocation.watchPosition(
       (position) => {
         currentPosition = position;
