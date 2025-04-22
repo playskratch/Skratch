@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PlaySkratch v1</title>
+  <link rel="icon" type="image/x-icon" href="skratch_favicon.ico">
+  <style>
+    body { font-family: Arial, sans-serif; background: #0A1F14; color: #fff; margin: 0; padding: 1rem; }
+    h1 { text-align: center; color: #D72638; }
+    .section { background: #111; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    .section h2 { color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    label { display: block; margin-top: 0.5rem; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; border-radius: 4px; border: none; }
+    button { padding: 0.7rem 1.2rem; background: #D72638; color: white; border: none; border-radius: 5px; margin-top: 1rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>PlaySkratch v1</h1>
+  <div class="section">
+    <h2>Start Round</h2>
+    <label>Course</label>
+    <input type="text" placeholder="e.g., Cheadle Golf Club" />
+    <label>Tee Time</label>
+    <input type="time" />
+    <label>Weather Conditions</label>
+    <textarea placeholder="e.g., Cool, cloudy, firm greens"></textarea>
+    <label>Fuel (Pre-Round)</label>
+    <input type="text" placeholder="e.g., Coffee + banana" />
+    <button>Start Round</button>
+  </div>
+  <div class="section">
+    <h2>Practice Log</h2>
+    <label>Date</label>
+    <input type="date" />
+    <label>Type</label>
+    <select>
+      <option>Full Swing</option>
+      <option>Short Game</option>
+      <option>Putting</option>
+      <option>Wedge Matrix</option>
+    </select>
+    <label>Clubs Used</label>
+    <input type="text" placeholder="e.g., 7i, 56°, Driver" />
+    <label>Notes</label>
+    <textarea></textarea>
+    <button>Log Practice</button>
+  </div>
+  <div class="section">
+    <h2>Coach View Export</h2>
+    <p>All tracked data will appear in a formatted report ready to export or print for your coach.</p>
+    <button>Generate Report</button>
+  </div>
+</body>
+</html>
