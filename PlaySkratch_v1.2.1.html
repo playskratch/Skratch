@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PlaySkratch v1.2.1</title>
+  <link rel="icon" type="image/x-icon" href="skratch_favicon.ico">
+  <style>
+    body { font-family: Arial, sans-serif; background: #0A1F14; color: #fff; margin: 0; padding: 1rem; }
+    h1 { text-align: center; color: #D72638; }
+    .section { background: #111; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    .section h2 { color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    label { display: block; margin-top: 0.5rem; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; border-radius: 4px; border: none; }
+    button { padding: 0.7rem 1.2rem; background: #D72638; color: white; border: none; border-radius: 5px; margin-top: 1rem; cursor: pointer; }
+    .readonly { background: #222; color: #fff; font-size: 0.9rem; }
+  </style>
+  <script>
+    function emailJSON() {
+      const rounds = localStorage.getItem('rounds') || '[]';
+      const practice = localStorage.getItem('practice') || '[]';
+      const bag = localStorage.getItem('bag') || '';
+      const fuel = localStorage.getItem('fuel') || '[]';
+
+      const data = {
+        rounds: JSON.parse(rounds),
+        practice: JSON.parse(practice),
+        bag: bag,
+        fuel: JSON.parse(fuel)
+      };
+
+      const jsonString = JSON.stringify(data, null, 2);
+      const encoded = encodeURIComponent(jsonString);
+      const subject = encodeURIComponent("PlaySkratch Data Export");
+      const body = encoded;
+
+      const emailLink = `mailto:?subject=${subject}&body=${body}`;
+      document.getElementById("jsonOutput").value = jsonString;
+      document.getElementById("emailLink").href = emailLink;
+      document.getElementById("emailBlock").style.display = "block";
+    }
+
+    function copyJSON() {
+      const textarea = document.getElementById("jsonOutput");
+      textarea.select();
+      document.execCommand("copy");
+      alert("JSON copied to clipboard.");
+    }
+  </script>
+</head>
+<body>
+  <h1>PlaySkratch v1.2.1</h1>
+
+  <div class="section">
+    <h2>Send My Data</h2>
+    <button onclick="emailJSON()">Prepare JSON for Email</button>
+    <div id="emailBlock" style="display:none;">
+      <textarea id="jsonOutput" class="readonly" rows="10" readonly></textarea>
+      <button onclick="copyJSON()">Copy JSON</button>
+      <a id="emailLink" target="_blank">Open in Email App</a>
+    </div>
+  </div>
+</body>
+</html>
