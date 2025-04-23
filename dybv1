@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skratch Yard Book - Cheadle GC</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root {
+      --primary: #2d6a4f;
+      --accent: #95d5b2;
+      --bg: #f8f9fa;
+      --text: #1b4332;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 1rem;
+    }
+    header {
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      color: var(--primary);
+    }
+    p.version {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    #map {
+      height: 320px;
+      margin: 1rem 0;
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+    }
+    select, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 0.8rem;
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      font-weight: 600;
+    }
+    button:hover {
+      background-color: #40916c;
+    }
+    #distanceDisplay {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Skratch Yard Book</h1>
+    <p>Cheadle Golf Club</p>
+    <p class="version">Build V1.0.0</p>
+  </header>
+
+  <div id="map"></div>
+
+  <select id="holeSelect" onchange="showHoleLayout()">
+    <option value="">-- Select Hole --</option>
+    <option value="1">Hole 1</option>
+    <option value="2">Hole 2</option>
+    <option value="3">Hole 3</option>
+    <option value="4">Hole 4</option>
+    <option value="5">Hole 5</option>
+    <option value="6">Hole 6</option>
+    <option value="7">Hole 7</option>
+    <option value="8">Hole 8</option>
+    <option value="9">Hole 9</option>
+  </select>
+
+  <div id="distanceDisplay">Distance: --</div>
+
+  <button onclick="downloadGreenCenters()">📤 Export Yardage Data</button>
+
+  <footer>Powered by Skratch • Cheadle GC</footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([53.387, -2.205], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+
+    const yardageData = {"1":{"yellowTee":{"lat":53.388032009504265,"lng":-2.2066688378377344},"whiteTee":{"lat":53.38811288200114,"lng":-2.206700025406888},"green":{"lat":53.38571223998849,"lng":-2.205569188764041}},"2":{"yellowTee":{"lat":53.38626939489518,"lng":-2.2052747323908255},"whiteTee":{"lat":53.386271816381495,"lng":-2.205265704956112},"green":{"lat":53.385068669993665,"lng":-2.206453059663395}},"3":{"yellowTee":{"lat":53.38584068003381,"lng":-2.206643976803834},"whiteTee":{"lat":53.386121893629834,"lng":-2.206867038648228},"green":{"lat":53.38391936418379,"lng":-2.20456190831435}},"4":{"whiteTee":{"lat":53.384253771359624,"lng":-2.2031399497927606},"yellowTee":{"lat":53.384253184375865,"lng":-2.203064935964635},"green":{"lat":53.38762462533176,"lng":-2.2028237780122653}},"5":{"whiteTee":{"lat":53.38781992157251,"lng":-2.2027181247607057},"yellowTee":{"lat":53.387822223452226,"lng":-2.2027331940025587},"green":{"lat":53.38766691173957,"lng":-2.203872348128568}},"6":{"whiteTee":{"lat":53.38814831755806,"lng":-2.203192950902201},"yellowTee":{"lat":53.3879345901702,"lng":-2.2033989294734346},"green":{"lat":53.38423723241945,"lng":-2.203860617660158}},"7":{"yellowTee":{"lat":53.3842424774788,"lng":-2.2042151941554953},"whiteTee":{"lat":53.38416059931602,"lng":-2.204176677045754},"green":{"lat":53.38538710239035,"lng":-2.205307636137749}},"8":{"whiteTee":{"lat":53.38418044359651,"lng":-2.204065949046185},"yellowTee":{"lat":53.384578483078,"lng":-2.2042946698259507},"green":{"lat":53.38747314253947,"lng":-2.2048501371482225}},"9":{"yellowTee":{"lat":53.38762756214837,"lng":-2.2042522159179976},"whiteTee":{"lat":53.38770262323538,"lng":-2.2040869135623917},"green":{"lat":53.387957546392975,"lng":-2.206264475498843}}};
+
+    let userMarker = null;
+    let markers = [];
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function showHoleLayout() {
+      const hole = document.getElementById('holeSelect').value;
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      if (!hole || !yardageData[hole]) return;
+
+      const data = yardageData[hole];
+
+      const tee = data.whiteTee || data.yellowTee;
+      const green = data.green;
+
+      if (tee) markers.push(L.marker([tee.lat, tee.lng], { title: 'Tee' }).addTo(map));
+      if (green) markers.push(L.marker([green.lat, green.lng], { title: 'Green' }).addTo(map));
+      if (tee && green) {
+        const line = L.polyline([[tee.lat, tee.lng], [green.lat, green.lng]], { color: '#2d6a4f', weight: 4 }).addTo(map);
+        markers.push(line);
+        map.fitBounds(line.getBounds(), { padding: [30, 30] });
+
+        if (userMarker) {
+          const dist = getDistance(userMarker.getLatLng().lat, userMarker.getLatLng().lng, green.lat, green.lng);
+          document.getElementById('distanceDisplay').innerText = `Distance: ${(dist * 1.09361).toFixed(0)} yards`;
+        }
+      }
+    }
+
+    function downloadGreenCenters() {
+      const blob = new Blob([JSON.stringify(yardageData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cheadle_yardage_data.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        if (!userMarker) {
+          userMarker = L.marker([latitude, longitude], { title: 'Your Location' }).addTo(map);
+        } else {
+          userMarker.setLatLng([latitude, longitude]);
+        }
+        showHoleLayout();
+      },
+      (err) => alert('GPS Error: ' + err.message),
+      { enableHighAccuracy: true }
+    );
+  </script>
+</body>
+</html>
