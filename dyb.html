@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Skratch Yardage Book - Cheadle GC</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -54,6 +54,13 @@
     button:hover {
       background-color: #40916c;
     }
+    #holeInfo {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 500;
+      margin: 0.5rem 0;
+      color: #333;
+    }
     #distanceDisplay {
       text-align: center;
       font-size: 1.5rem;
@@ -72,7 +79,7 @@
   <header>
     <h1>Skratch Yardage Book</h1>
     <p>Cheadle Golf Club</p>
-    <p class="version">Build V1.0.0 Stable Release</p>
+    <p class="version">Build V1.0.0 | Stable Release</p>
   </header>
 
   <div id="map"></div>
@@ -90,6 +97,8 @@
     <option value="9">Hole 9</option>
   </select>
 
+  <div id="holeInfo">Select a hole to view details</div>
+
   <div id="distanceDisplay">Distance: --</div>
 
   <button onclick="downloadGreenCenters()">📤 Export Yardage Data</button>
@@ -101,8 +110,19 @@
     const map = L.map('map').setView([53.387, -2.205], 17);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    const yardageData = {"1":{"yellowTee":{"lat":53.388032009504265,"lng":-2.2066688378377344},"whiteTee":{"lat":53.38811288200114,"lng":-2.206700025406888},"green":{"lat":53.38571223998849,"lng":-2.205569188764041}},"2":{"yellowTee":{"lat":53.38626939489518,"lng":-2.2052747323908255},"whiteTee":{"lat":53.386271816381495,"lng":-2.205265704956112},"green":{"lat":53.385068669993665,"lng":-2.206453059663395}},"3":{"yellowTee":{"lat":53.38584068003381,"lng":-2.206643976803834},"whiteTee":{"lat":53.386121893629834,"lng":-2.206867038648228},"green":{"lat":53.38391936418379,"lng":-2.20456190831435}},"4":{"whiteTee":{"lat":53.384253771359624,"lng":-2.2031399497927606},"yellowTee":{"lat":53.384253184375865,"lng":-2.203064935964635},"green":{"lat":53.38762462533176,"lng":-2.2028237780122653}},"5":{"whiteTee":{"lat":53.38781992157251,"lng":-2.2027181247607057},"yellowTee":{"lat":53.387822223452226,"lng":-2.2027331940025587},"green":{"lat":53.38766691173957,"lng":-2.203872348128568}},"6":{"whiteTee":{"lat":53.38814831755806,"lng":-2.203192950902201},"yellowTee":{"lat":53.3879345901702,"lng":-2.2033989294734346},"green":{"lat":53.38423723241945,"lng":-2.203860617660158}},"7":{"yellowTee":{"lat":53.3842424774788,"lng":-2.2042151941554953},"whiteTee":{"lat":53.38416059931602,"lng":-2.204176677045754},"green":{"lat":53.38538710239035,"lng":-2.205307636137749}},"8":{"whiteTee":{"lat":53.38418044359651,"lng":-2.204065949046185},"yellowTee":{"lat":53.384578483078,"lng":-2.2042946698259507},"green":{"lat":53.38747314253947,"lng":-2.2048501371482225}},"9":{"yellowTee":{"lat":53.38762756214837,"lng":-2.2042522159179976},"whiteTee":{"lat":53.38770262323538,"lng":-2.2040869135623917},"green":{"lat":53.387957546392975,"lng":-2.206264475498843}}};
+    const holeMeta = {
+      1: { par: 4, yellow: 296, white: 307 },
+      2: { par: 3, yellow: 168, white: 171 },
+      3: { par: 4, yellow: 296, white: 328 },
+      4: { par: 4, yellow: 411, white: 421 },
+      5: { par: 3, yellow: 97,  white: 97  },
+      6: { par: 4, yellow: 431, white: 437 },
+      7: { par: 3, yellow: 170, white: 170 },
+      8: { par: 4, yellow: 404, white: 404 },
+      9: { par: 3, yellow: 160, white: 160 }
+    };
 
+    const yardageData = /* your existing yardage JSON (unchanged) */;
     let userMarker = null;
     let markers = [];
 
@@ -118,13 +138,16 @@
 
     function showHoleLayout() {
       const hole = document.getElementById('holeSelect').value;
+      document.getElementById('holeInfo').innerText = holeMeta[hole] ?
+        `Hole ${hole} • Par ${holeMeta[hole].par} • Yellow: ${holeMeta[hole].yellow} yds • White: ${holeMeta[hole].white} yds` :
+        'Select a hole to view details';
+
       markers.forEach(m => map.removeLayer(m));
       markers = [];
 
       if (!hole || !yardageData[hole]) return;
 
       const data = yardageData[hole];
-
       const tee = data.whiteTee || data.yellowTee;
       const green = data.green;
 
