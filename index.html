@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PlaySkratch v1.2.1</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0A1F14; color: #fff; margin: 0; padding: 1rem; }
+    h1 { text-align: center; color: #D72638; }
+    .section { background: #111; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    .section h2 { color: #fff; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    label { display: block; margin-top: 0.5rem; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; border-radius: 4px; border: none; }
+    button { padding: 0.7rem 1.2rem; background: #D72638; color: white; border: none; border-radius: 5px; margin-top: 1rem; cursor: pointer; }
+    .filter-btn { margin: 0.2rem; padding: 0.4rem 0.8rem; background: #333; color: white; border: 1px solid #555; border-radius: 4px; cursor: pointer; }
+    textarea.readonly { background: #222; color: #fff; font-size: 0.9rem; }
+  </style>
+  <script>
+    function savePractice() {
+      const date = document.getElementById('practiceDate').value;
+      const type = document.getElementById('practiceType').value;
+      const clubs = document.getElementById('practiceClubs').value;
+      const notes = document.getElementById('practiceNotes').value;
+      if (!date || !type || !clubs) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      const newSession = { date, type, clubs, notes };
+      let practiceData = [];
+      try { practiceData = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
+      practiceData.push(newSession);
+      localStorage.setItem('practice', JSON.stringify(practiceData));
+      showPracticeSessions();
+      alert('Practice logged!');
+    }
+
+    function showPracticeSessions(filter = '') {
+      const container = document.getElementById('practiceHistory');
+      container.innerHTML = '';
+      let sessions = [];
+      try { sessions = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
+      const filtered = filter ? sessions.filter(s => s.type === filter) : sessions;
+      if (filtered.length === 0) {
+        container.innerHTML = '<p>No practice sessions found.</p>';
+        return;
+      }
+      filtered.reverse().forEach(session => {
+        const entry = document.createElement('div');
+        entry.innerHTML = `<strong>${session.date}</strong> – ${session.type}<br/>
+                          Clubs: ${session.clubs}<br/>
+                          Notes: ${session.notes || '–'}<hr/>`;
+        container.appendChild(entry);
+      });
+    }
+
+    function saveBag() {
+      const bagInput = document.getElementById('bagInput').value;
+      localStorage.setItem('bag', bagInput);
+      alert('Bag saved!');
+    }
+
+    function showBag() {
+      document.getElementById('bagInput').value = localStorage.getItem('bag') || '';
+    }
+
+    function emailJSON() {
+      let data = {
+        rounds: [],
+        practice: [],
+        bag: '',
+        fuel: []
+      };
+      try { data.rounds = JSON.parse(localStorage.getItem('rounds')) || []; } catch (e) {}
+      try { data.practice = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
+      try { data.bag = localStorage.getItem('bag') || ''; } catch (e) {}
+      try { data.fuel = JSON.parse(localStorage.getItem('fuel')) || []; } catch (e) {}
+
+      const jsonStr = JSON.stringify(data, null, 2);
+      document.getElementById('jsonOutput').value = jsonStr;
+
+      const subject = encodeURIComponent("PlaySkratch Data Export");
+      const body = encodeURIComponent(jsonStr);
+      const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+      document.getElementById('emailLink').href = mailtoLink;
+      document.getElementById('emailBlock').style.display = 'block';
+    }
+
+    function copyJSON() {
+      const textarea = document.getElementById('jsonOutput');
+      textarea.select();
+      document.execCommand("copy");
+      alert("JSON copied to clipboard!");
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const content = JSON.parse(e.target.result);
+          localStorage.setItem('rounds', JSON.stringify(content.rounds || []));
+          localStorage.setItem('practice', JSON.stringify(content.practice || []));
+          localStorage.setItem('bag', content.bag || '');
+          localStorage.setItem('fuel', JSON.stringify(content.fuel || []));
+          showBag();
+          showPracticeSessions();
+          alert('Data imported successfully!');
+        } catch (e) {
+          alert("Import failed: Invalid JSON file.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    window.onload = function() {
+      showBag();
+      showPracticeSessions();
+    };
+  </script>
+</head>
+<body>
+  <h1>PlaySkratch v1.2.1</h1>
+
+  <div class="section">
+    <h2>Bag Setup</h2>
+    <label>Your Bag (comma-separated)</label>
+    <input id="bagInput" type="text" placeholder="e.g. PXG Driver, Cobra 4W, Nicklaus 7i..." />
+    <button onclick="saveBag()">Save Bag</button>
+  </div>
+
+  <div class="section">
+    <h2>Practice Log</h2>
+    <label>Date</label>
+    <input id="practiceDate" type="date" />
+    <label>Type</label>
+    <select id="practiceType">
+      <option>Full Swing</option>
+      <option>Short Game</option>
+      <option>Putting</option>
+      <option>Wedge Matrix</option>
+    </select>
+    <label>Clubs Used</label>
+    <input id="practiceClubs" type="text" placeholder="e.g., 7i, 56°, Driver" />
+    <label>Notes</label>
+    <textarea id="practiceNotes"></textarea>
+    <button onclick="savePractice()">Log Practice</button>
+  </div>
+
+  <div class="section">
+    <h2>Practice History</h2>
+    <div>
+      <button class="filter-btn" onclick="showPracticeSessions()">All</button>
+      <button class="filter-btn" onclick="showPracticeSessions('Full Swing')">Full Swing</button>
+      <button class="filter-btn" onclick="showPracticeSessions('Short Game')">Short Game</button>
+      <button class="filter-btn" onclick="showPracticeSessions('Putting')">Putting</button>
+      <button class="filter-btn" onclick="showPracticeSessions('Wedge Matrix')">Wedge Matrix</button>
+    </div>
+    <div id="practiceHistory" style="margin-top: 1rem;"></div>
+  </div>
+
+  <div class="section">
+    <h2>Data Management</h2>
+    <button onclick="emailJSON()">Send My Data via Email</button>
+    <label for="importJson">Import Data</label>
+    <input type="file" id="importJson" onchange="importJSON(event)" />
+    <div id="emailBlock" style="margin-top: 1rem; display: none;">
+      <textarea id="jsonOutput" rows="10" readonly class="readonly"></textarea>
+      <button onclick="copyJSON()">Copy to Clipboard</button>
+      <a id="emailLink" target="_blank">Open Email App</a>
+    </div>
+  </div>
+</body>
+</html>
