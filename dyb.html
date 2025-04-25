@@ -123,6 +123,7 @@
     <option value="7">Hole 7</option>
     <option value="8">Hole 8</option>
     <option value="9">Hole 9</option>
+    <option value="Practice">Practice Area</option>
   </select>
 
   <div id="holeInfo">Select a hole to view details</div>
@@ -133,9 +134,11 @@
     <button onclick="saveGreenCenter()">📍 Save Green Center</button>
     <button onclick="saveWhiteTee()">⚪ Save White Tee Marker</button>
     <button onclick="saveYellowTee()">🟡 Save Yellow Tee Marker</button>
+    <button onclick="downloadGreenCenters()">📤 Export Yardage Data</button>
   </div>
 
-  <button onclick="downloadGreenCenters()">📤 Export Yardage Data</button>
+  <button onclick="enableCompass()">🧭 Enable Compass</button>
+
 
   <div id="compass">--</div>
 
@@ -183,7 +186,8 @@
     "6": { "whiteTee": { "lat": 53.38814831755806, "lng": -2.203192950902201 }, "yellowTee": { "lat": 53.3879345901702, "lng": -2.2033989294734346 }, "green": { "lat": 53.38423723241945, "lng": -2.203860617660158 } },
     "7": { "yellowTee": { "lat": 53.3842424774788, "lng": -2.2042151941554953 }, "whiteTee": { "lat": 53.38416059931602, "lng": -2.204176677045754 }, "green": { "lat": 53.38538710239035, "lng": -2.205307636137749 } },
     "8": { "whiteTee": { "lat": 53.38418044359651, "lng": -2.204065949046185 }, "yellowTee": { "lat": 53.384578483078, "lng": -2.2042946698259507 }, "green": { "lat": 53.38747314253947, "lng": -2.2048501371482225 } },
-    "9": { "yellowTee": { "lat": 53.38762756214837, "lng": -2.2042522159179976 }, "whiteTee": { "lat": 53.38770262323538, "lng": -2.2040869135623917 }, "green": { "lat": 53.387957546392975, "lng": -2.206264475498843 } }
+    "9": { "yellowTee": { "lat": 53.38762756214837, "lng": -2.2042522159179976 }, "whiteTee": { "lat": 53.38770262323538, "lng": -2.2040869135623917 }, "green": { "lat": 53.387957546392975, "lng": -2.206264475498843 } },
+    "Practice": { "yellowTee": { "lat": 53.38762756214837, "lng": -2.2042522159179976 }, "whiteTee": { "lat": 53.38770262323538, "lng": -2.2040869135623917 }, "green": { "lat": 53.387957546392975, "lng": -2.206264475498843 } }
   };
 
   let userMarker = null;
@@ -224,8 +228,37 @@
   }
 
   // Compass Setup
-  window.addEventListener("deviceorientationabsolute", handleOrientation, true);
-  window.addEventListener("deviceorientation", handleOrientation, true);
+  function enableCompass() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(response => {
+          if (response === 'granted') {
+            window.addEventListener('deviceorientation', handleOrientation, true);
+          } else {
+            alert('Permission denied for compass.');
+          }
+        })
+        .catch(console.error);
+    } else {
+      window.addEventListener('deviceorientation', handleOrientation, true);
+    }
+  }
+
+  function handleOrientation(event) {
+    const compass = document.getElementById("compass");
+    let heading = event.alpha;
+
+    if (typeof event.webkitCompassHeading !== "undefined") {
+      heading = event.webkitCompassHeading;
+    }
+
+    if (heading !== null && heading !== undefined) {
+      const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+      const index = Math.round(heading / 45) % 8;
+      compass.innerText = directions[index];
+      compass.style.transform = `rotate(${-heading}deg)`;
+    }
+  }
 
   function handleOrientation(event) {
     const compass = document.getElementById("compass");
