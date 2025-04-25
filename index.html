@@ -1,1 +1,187 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PlaySkratch v1.3.1</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0A1F14; color: #fff; padding: 1rem; }
+    h1, h2 { color: #D72638; text-align: center; }
+    .section { background: #111; padding: 1rem; margin: 1rem 0; border-radius: 8px; }
+    label { display: block; margin-top: 0.5rem; }
+    input, select, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; border-radius: 4px; border: none; }
+    button { padding: 0.7rem 1.2rem; background: #D72638; color: white; border: none; border-radius: 5px; margin-top: 1rem; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #333; padding: 0.3rem; text-align: center; font-size: 0.85rem; }
+    th { background-color: #222; }
+    textarea.readonly { background: #222; color: #fff; font-size: 0.9rem; }
+  </style>
+  <script>
+    function savePractice() {
+      const date = document.getElementById('practiceDate').value;
+      const type = document.getElementById('practiceType').value;
+      const clubs = document.getElementById('practiceClubs').value;
+      const notes = document.getElementById('practiceNotes').value;
+      if (!date || !type || !clubs) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      const newSession = { date, type, clubs, notes };
+      let practiceData = [];
+      try { practiceData = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
+      practiceData.push(newSession);
+      localStorage.setItem('practice', JSON.stringify(practiceData));
+      alert('Practice logged!');
+      showPracticeSessions();
+    }
+
+    function showPracticeSessions() {
+      const container = document.getElementById('practiceHistory');
+      container.innerHTML = '';
+      let sessions = [];
+      try { sessions = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
+      if (sessions.length === 0) {
+        container.innerHTML = '<p>No practice sessions yet.</p>';
+        return;
+      }
+      sessions.reverse().forEach(session => {
+        const entry = document.createElement('div');
+        entry.innerHTML = `<strong>${session.date}</strong> – ${session.type}<br/>
+                          Clubs: ${session.clubs}<br/>
+                          Notes: ${session.notes || '-'}<hr/>`;
+        container.appendChild(entry);
+      });
+    }
+
+    function logRound() {
+      const round = {
+        date: document.getElementById('roundDate').value,
+        course: document.getElementById('roundCourse').value,
+        tee: document.getElementById('roundTee').value,
+        ball: document.getElementById('roundBall').value,
+        bag: document.getElementById('roundBag').value,
+        weather: document.getElementById('roundWeather').value,
+        holes: []
+      };
+      for (let i = 1; i <= 18; i++) {
+        const hole = {
+          score: document.getElementById(`score${i}`).value,
+          fir: document.getElementById(`fir${i}`).value,
+          gir: document.getElementById(`gir${i}`).value,
+          putts: document.getElementById(`putts${i}`).value,
+          updown: document.getElementById(`updown${i}`).value,
+          club: document.getElementById(`club${i}`).value,
+          notes: document.getElementById(`notes${i}`).value
+        };
+        round.holes.push(hole);
+      }
+      let rounds = [];
+      try { rounds = JSON.parse(localStorage.getItem('rounds')) || []; } catch (e) {}
+      rounds.push(round);
+      localStorage.setItem('rounds', JSON.stringify(rounds));
+      alert('Round saved!');
+    }
+
+    function exportAllData() {
+      const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
+      const practice = JSON.parse(localStorage.getItem('practice') || '[]');
+      const bag = localStorage.getItem('bag') || '';
+
+      const data = { rounds, practice, bag };
+      const jsonString = JSON.stringify(data, null, 2);
+
+      document.getElementById('jsonOutput').value = jsonString;
+      const subject = encodeURIComponent("PlaySkratch Data Export");
+      const body = encodeURIComponent(jsonString);
+      document.getElementById('emailLink').href = `mailto:?subject=${subject}&body=${body}`;
+      document.getElementById('emailBlock').style.display = 'block';
+    }
+
+    function copyJSON() {
+      const textarea = document.getElementById('jsonOutput');
+      textarea.select();
+      document.execCommand('copy');
+      alert('JSON copied to clipboard!');
+    }
+
+    window.onload = function() {
+      showPracticeSessions();
+    };
+  </script>
+</head>
+<body>
+  <h1>PlaySkratch v1.3.1</h1>
+
+  <div class="section">
+    <h2>Practice Log</h2>
+    <label>Date</label>
+    <input id="practiceDate" type="date" />
+    <label>Type</label>
+    <select id="practiceType">
+      <option>Full Swing</option>
+      <option>Short Game</option>
+      <option>Putting</option>
+      <option>Wedge Matrix</option>
+    </select>
+    <label>Clubs Used</label>
+    <input id="practiceClubs" type="text" placeholder="e.g., 7i, 56°, Driver" />
+    <label>Notes</label>
+    <textarea id="practiceNotes"></textarea>
+    <button onclick="savePractice()">Log Practice</button>
+    <div id="practiceHistory" style="margin-top:1rem;"></div>
+  </div>
+  <div class="section">
+    <h2>Round Setup</h2>
+    <label>Date</label>
+    <input type="date" id="roundDate" />
+    <label>Course</label>
+    <input type="text" id="roundCourse" placeholder="e.g., Cheadle Golf Club" />
+    <label>Tee</label>
+    <select id="roundTee">
+      <option value="Yellow">Yellow</option>
+      <option value="White">White</option>
+    </select>
+    <label>Ball</label>
+    <input type="text" id="roundBall" />
+    <label>Bag</label>
+    <input type="text" id="roundBag" />
+    <label>Weather / Notes</label>
+    <textarea id="roundWeather"></textarea>
+  </div>
+
+  <div class="section">
+    <h2>Hole-by-Hole Tracking</h2>
+    <table>
+      <tr>
+        <th>Hole</th><th>Score</th><th>FIR</th><th>GIR</th><th>Putts</th><th>Up&Dn</th><th>Club</th><th>Notes</th>
+      </tr>
+      <script>
+        for (let i = 1; i <= 18; i++) {
+          document.write('<tr>' +
+            '<td>' + i + '</td>' +
+            '<td><input id="score' + i + '" type="number" min="1" max="12" /></td>' +
+            '<td><select id="fir' + i + '"><option>-</option><option>✔</option><option>Left</option><option>Right</option><option>N/A</option></select></td>' +
+            '<td><select id="gir' + i + '"><option>-</option><option>✔</option><option>Short</option><option>Long</option><option>Left</option><option>Right</option></select></td>' +
+            '<td><input id="putts' + i + '" type="number" min="0" max="5" /></td>' +
+            '<td><select id="updown' + i + '"><option>-</option><option>✔</option><option>✘</option></select></td>' +
+            '<td><input id="club' + i + '" type="text" /></td>' +
+            '<td><input id="notes' + i + '" type="text" /></td>' +
+            '</tr>');
+        }
+      </script>
+    </table>
+    <button onclick="logRound()">Save Round</button>
+  </div>
+
+  <div class="section">
+    <h2>Data Management</h2>
+    <button onclick="exportAllData()">Send All Data via Email</button>
+    <div id="emailBlock" style="display:none; margin-top: 1rem;">
+      <textarea id="jsonOutput" class="readonly" rows="10" readonly></textarea>
+      <button onclick="copyJSON()">Copy JSON</button>
+      <a id="emailLink" target="_blank">Open Email App</a>
+    </div>
+  </div>
+</body>
+</html>
