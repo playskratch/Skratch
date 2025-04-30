@@ -197,29 +197,43 @@
   let userMarker = null;
   let markers = [];
 
-  function showHoleLayout() {
-    const hole = document.getElementById('holeSelect').value;
-    document.getElementById('holeInfo').innerText = holeMeta[hole] ?
-      `Hole ${hole} • Par ${holeMeta[hole].par} • Yellow: ${holeMeta[hole].yellow} yds • White: ${holeMeta[hole].white} yds`
-      : 'Select a hole to view details';
+function showHoleLayout() {
+  const hole = document.getElementById('holeSelect').value;
+  document.getElementById('holeInfo').innerText = holeMeta[hole]
+    ? `Hole ${hole} • Par ${holeMeta[hole].par} • Yellow: ${holeMeta[hole].yellow} yds • White: ${holeMeta[hole].white} yds`
+    : 'Select a hole to view details';
 
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
 
-    if (!hole || !yardageData[hole]) return;
+  if (!hole || !yardageData[hole]) return;
 
-    const data = yardageData[hole];
-    const tee = data.whiteTee || data.yellowTee;
-    const green = data.green;
+  const data = yardageData[hole];
+  const tee = data.whiteTee || data.yellowTee;
+  const green = data.green;
 
-    if (tee) markers.push(L.marker([tee.lat, tee.lng], { title: 'Tee' }).addTo(map));
-    if (green) markers.push(L.marker([green.lat, green.lng], { title: 'Green' }).addTo(map));
-    if (tee && green) {
-      const line = L.polyline([[tee.lat, tee.lng], [green.lat, green.lng]], { color: '#2d6a4f', weight: 4 }).addTo(map);
-      markers.push(line);
-      map.fitBounds(line.getBounds(), { padding: [30, 30] });
+  if (tee) markers.push(L.marker([tee.lat, tee.lng], { title: 'Tee' }).addTo(map));
+  if (green) markers.push(L.marker([green.lat, green.lng], { title: 'Green' }).addTo(map));
+
+  if (tee && green) {
+    const line = L.polyline([[tee.lat, tee.lng], [green.lat, green.lng]], { color: '#2d6a4f', weight: 4 }).addTo(map);
+    markers.push(line);
+    map.fitBounds(line.getBounds(), { padding: [30, 30] });
+
+    // ✅ Show distance from user to green if available
+    if (userMarker) {
+      const dist = getDistance(
+        userMarker.getLatLng().lat,
+        userMarker.getLatLng().lng,
+        green.lat,
+        green.lng
+      );
+      document.getElementById('distanceDisplay').innerText = `Distance: ${(dist * 1.09361).toFixed(0)} yards`;
+    } else {
+      document.getElementById('distanceDisplay').innerText = `Distance: --`;
     }
   }
+}
 
   function downloadGreenCenters() {
     const blob = new Blob([JSON.stringify(yardageData, null, 2)], { type: "application/json" });
