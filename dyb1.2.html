@@ -304,7 +304,9 @@ function showHoleLayout() {
       }
       showHoleLayout();
     },
-    (err) => alert('GPS Error: ' + err.message),
+(err) => {
+  console.warn('GPS Error:', err.message);
+}
     { enableHighAccuracy: true }
   );
   </script>
