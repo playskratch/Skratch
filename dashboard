@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlaySkratch v1.4 - Chasing Scratch</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      margin-top: 30px;
+    }
+    .goal, .practice-type {
+      background: #fff;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .progress-bar {
+      background: #eee;
+      border-radius: 4px;
+      height: 10px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+    .progress {
+      background: #4caf50;
+      height: 100%;
+      transition: width 0.3s;
+    }
+    #chartContainer {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>PlaySkratch v1.4 - "Chasing Scratch"</h1>
+
+  <h2>🎯 My Goals</h2>
+  <div id="goals-container"></div>
+  <div id="add-goal-form">
+    <input type="text" placeholder="Label" id="goalLabel" />
+    <select id="goalStat">
+      <option value="FIR">FIR%</option>
+      <option value="GIR">GIR%</option>
+      <option value="Putts">Putts/Round</option>
+    </select>
+    <input type="number" placeholder="Target" id="goalTarget" />
+    <button onclick="handleAddGoal()">Add Goal</button>
+  </div>
+
+  <h2>📊 Practice Impact Analyzer</h2>
+  <div id="practice-impact"></div>
+
+  <script>
+    function loadGoals() {
+      const container = document.getElementById('goals-container');
+      const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      container.innerHTML = '';
+
+      goals.forEach(goal => {
+        const percent = Math.min(100, Math.round((goal.stat === 'Putts'
+          ? goal.target / goal.current
+          : goal.current / goal.target) * 100));
+
+        const div = document.createElement('div');
+        div.className = 'goal';
+        div.innerHTML = `
+          <strong>${goal.label}</strong>
+          <div class="progress-bar">
+            <div class="progress" style="width: ${percent}%"></div>
+          </div>
+          <small>${goal.current}${goal.unit} / Goal: ${goal.target}${goal.unit}</small>
+          <button onclick="deleteGoal(${goal.id})">🗑️</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addGoal(stat, target, unit, label) {
+      const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      const id = Date.now();
+      goals.push({ id, stat, target: parseFloat(target), current: 0, unit, label });
+      localStorage.setItem('goals', JSON.stringify(goals));
+      loadGoals();
+    }
+
+    function deleteGoal(id) {
+      let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      goals = goals.filter(g => g.id !== id);
+      localStorage.setItem('goals', JSON.stringify(goals));
+      loadGoals();
+    }
+
+    function updateGoalStats(stats) {
+      let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      goals = goals.map(g => {
+        if (stats[g.stat]) g.current = stats[g.stat];
+        return g;
+      });
+      localStorage.setItem('goals', JSON.stringify(goals));
+      loadGoals();
+    }
+
+    function handleAddGoal() {
+      const stat = document.getElementById('goalStat').value;
+      const target = document.getElementById('goalTarget').value;
+      const label = document.getElementById('goalLabel').value;
+      const unit = (stat === 'Putts') ? '' : '%';
+      addGoal(stat, target, unit, label);
+    }
+
+    // Sample data update
+    const latestStats = {
+      'FIR': 53,
+      'GIR': 42,
+      'Putts': 31.5
+    };
+    updateGoalStats(latestStats);
+    loadGoals();
+  </script>
+</body>
+</html>
