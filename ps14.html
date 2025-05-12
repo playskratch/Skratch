@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlaySkratch v1.4 - Chasing Scratch</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0A1F14;
+      color: #fff;
+      padding: 1rem;
+      margin: 0;
+    }
+    h1, h2 {
+      color: #D72638;
+      text-align: center;
+    }
+    .section {
+      background: #111;
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+    }
+    label, input, select, textarea, button {
+      font-size: 1rem;
+    }
+    label {
+      display: block;
+      margin-top: 0.5rem;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      border-radius: 4px;
+      border: none;
+    }
+    input[type="number"] {
+      inputmode: numeric;
+    }
+    button {
+      padding: 0.8rem 1.2rem;
+      background: #D72638;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-top: 1rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .goal {
+      background: #1a1a1a;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 6px;
+    }
+    .progress-bar {
+      background: #444;
+      height: 10px;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0.5rem 0;
+    }
+    .progress {
+      background: #4caf50;
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <h1>PlaySkratch v1.4 - Chasing Scratch</h1>
+  <div class="section">
+    <h2>🎯 My Goals</h2>
+    <div id="goals-container"></div>
+    <div>
+      <input type="text" id="goalLabel" placeholder="Goal Label (e.g. FIR > 55%)" />
+      <select id="goalStat">
+        <option value="FIR">FIR%</option>
+        <option value="GIR">GIR%</option>
+        <option value="Putts">Putts/Round</option>
+      </select>
+      <input type="number" id="goalTarget" placeholder="Target Value" />
+      <button onclick="handleAddGoal()">Add Goal</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📊 Practice Impact Analyzer</h2>
+    <div id="practice-impact"></div>
+  </div>
+
+  <script>
+    function loadGoals() {
+      const container = document.getElementById('goals-container');
+      const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      container.innerHTML = '';
+
+      goals.forEach(goal => {
+        const percent = Math.min(100, Math.round((goal.stat === 'Putts'
+          ? goal.target / goal.current
+          : goal.current / goal.target) * 100));
+
+        const div = document.createElement('div');
+        div.className = 'goal';
+        div.innerHTML = `
+          <strong>${goal.label}</strong>
+          <div class="progress-bar">
+            <div class="progress" style="width: ${percent}%"></div>
+          </div>
+          <small>${goal.current}${goal.unit} / Goal: ${goal.target}${goal.unit}</small>
+          <button onclick="deleteGoal(${goal.id})">🗑️ Delete</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function addGoal(stat, target, unit, label) {
+      const goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      const id = Date.now();
+      goals.push({ id, stat, target: parseFloat(target), current: 0, unit, label });
+      localStorage.setItem('goals', JSON.stringify(goals));
+      loadGoals();
+    }
+
+    function deleteGoal(id) {
+      let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      goals = goals.filter(g => g.id !== id);
+      localStorage.setItem('goals', JSON.stringify(goals));
+      loadGoals();
+    }
+
+    function updateGoalStats(stats) {
+      let goals = JSON.parse(localStorage.getItem('goals') || '[]');
+      goals = goals.map(g => {
+        if (stats[g.stat] !== undefined) g.current = stats[g.stat];
+        return g;
+      });
+      localStorage.setItem('goals', JSON.stringify(goals));
+      loadGoals();
+    }
+
+    function handleAddGoal() {
+      const stat = document.getElementById('goalStat').value;
+      const target = document.getElementById('goalTarget').value;
+      const label = document.getElementById('goalLabel').value;
+      const unit = (stat === 'Putts') ? '' : '%';
+      if (!target || !label) {
+        alert("Please fill in both label and target.");
+        return;
+      }
+      addGoal(stat, target, unit, label);
+    }
+
+    function buildPracticeImpact() {
+      const container = document.getElementById('practice-impact');
+      const sessions = JSON.parse(localStorage.getItem('practice') || '[]');
+      const types = {};
+      sessions.forEach(s => {
+        types[s.type] = (types[s.type] || 0) + 1;
+      });
+      container.innerHTML = Object.entries(types).map(([type, count]) =>
+        `<div><strong>${type}</strong>: ${count} sessions</div>`).join('');
+    }
+
+    // Simulate stats update (replace with live stat logic)
+    const latestStats = {
+      'FIR': 53,
+      'GIR': 42,
+      'Putts': 31.5
+    };
+    updateGoalStats(latestStats);
+    loadGoals();
+    buildPracticeImpact();
+  </script>
+</body>
+</html>
