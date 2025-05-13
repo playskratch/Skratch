@@ -95,6 +95,10 @@
   <h1>PlaySkratch v1.3.2</h1>
 
   <div class="section">
+    <button onclick="exportCoachPDF()">Export PDF for Coach</button>
+  </div>
+
+  <div class="section">
     <details open>
       <summary>Practice Log</summary>
       <label>Date</label>
@@ -144,8 +148,12 @@
   </div>
 
   <div class="section">
-    <button onclick="exportCoachPDF()">Export PDF for Coach</button>
-  </div>
+  <details>
+    <summary>Round History</summary>
+    <div id="roundHistory" style="margin-top: 1rem;"></div>
+  </details>
+</div>
+
 
   <div class="sticky-save">
     <button onclick="logRound()">Save Round</button>
@@ -295,13 +303,66 @@ function exportCoachPDF() {
     });
   }
 
+  y += 10;
+  doc.setFontSize(12);
+  doc.text('Last 5 Rounds', 10, y);
+  y += 6;
+
+  const recentRounds = rounds.slice(-5).reverse();
+  doc.setFontSize(10);
+  if (recentRounds.length === 0) {
+    doc.text('No rounds available.', 10, y);
+  } else {
+    recentRounds.forEach((r) => {
+      let total = 0, front = 0, back = 0;
+      r.holes.forEach((h, i) => {
+        const s = parseInt(h.score) || 0;
+        total += s;
+        if (i < 9) front += s;
+        else back += s;
+      });
+      const summary = `${r.date} – ${r.course || 'Unknown Course'} | Front 9: ${front} | Back 9: ${back} | Total: ${total}`;
+      const lines = doc.splitTextToSize(summary, 180);
+      doc.text(lines, 10, y);
+      y += lines.length * 6;
+      if (y > 270) { doc.addPage(); y = 10; }
+    });
+  }
+
   doc.save(`PlaySkratch_Coach_Report_${latest.date}.pdf`);
     }
 
-    window.onload = function() {
+    function showRoundHistory() {
+  const container = document.getElementById('roundHistory');
+  container.innerHTML = '';
+  const rounds = JSON.parse(localStorage.getItem('rounds') || '[]').reverse();
+  if (rounds.length === 0) {
+    container.innerHTML = '<p>No rounds logged yet.</p>';
+    return;
+  }
+  rounds.forEach(r => {
+    let total = 0;
+    let front = 0;
+    let back = 0;
+    r.holes.forEach((h, i) => {
+      const score = parseInt(h.score) || 0;
+      total += score;
+      if (i < 9) front += score;
+      else back += score;
+    });
+    const div = document.createElement('div');
+    div.innerHTML = `<strong>${r.date}</strong> — ${r.course || 'Unknown Course'}<br>
+      Front 9: ${front} | Back 9: ${back} | Total: ${total}<hr>`;
+    container.appendChild(div);
+  });
+}
+
+window.onload = function() {
       showPracticeSessions();
       buildHoleInputs();
+      showRoundHistory();
     }
   </script>
 </body>
 </html>
+
