@@ -93,16 +93,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>PlaySkratch</h1>
-
+  <h1>PlaySkratch v1.3.2</h1>
   <div class="section">
     <button onclick="exportCoachPDF()">Export PDF for Coach</button>
 </div>
-
-  <div class="section">
-    <button onclick="logRound()">Save Round</button>
-  </div>
-
   <div class="section">
     <details open>
       <summary>Practice Log</summary>
@@ -170,12 +164,7 @@
       <div id="handicapHistory" style="margin-top: 1rem;"></div>
     </details>
   </div>
-
-  <div class="section">
-    <button onclick="exportCoachPDF()">Export PDF for Coach</button>
-</div>
-
-  <div class="section">
+  <div class="sticky-save">
     <button onclick="logRound()">Save Round</button>
   </div>
 
@@ -209,7 +198,9 @@
       sessions.forEach(s => {
         const div = document.createElement('div');
         div.innerHTML = `<strong>${s.date}</strong> – ${s.type}<br>Clubs: ${s.clubs}<br>Notes: ${s.notes || '-'}<hr>`;
-        container.appendChild(div);
+
+
+    container.appendChild(div);
       });
     }
 
@@ -448,7 +439,7 @@ async function exportCoachPDF() {
     container.innerHTML = '<p>No rounds logged yet.</p>';
     return;
   }
-  rounds.forEach(r => {
+  rounds.forEach((r, index) => {
     let total = 0;
     let front = 0;
     let back = 0;
@@ -460,7 +451,14 @@ async function exportCoachPDF() {
     });
     const div = document.createElement('div');
     div.innerHTML = `<strong>${r.date}</strong> — ${r.course || 'Unknown Course'}<br>
-      Front 9: ${front} | Back 9: ${back} | Total: ${total}<hr>`;
+      Front 9: ${front} | Back 9: ${back} | Total: ${total}`;
+    const btn = document.createElement('button');
+    btn.textContent = '🗑️';
+    btn.style.margin = '0.5rem 0';
+    btn.onclick = () => deleteRound(index);
+    div.appendChild(document.createElement('br'));
+    div.appendChild(btn);
+    div.appendChild(document.createElement('hr'));
     container.appendChild(div);
   });
 }
@@ -500,6 +498,14 @@ function fillCheadlePar() {
     const input = document.getElementById(`par${i + 1}`);
     if (input) input.value = p;
   });
+}
+
+function deleteRound(index) {
+  const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
+  if (!confirm(`Delete round from ${rounds[index].date}?`)) return;
+  rounds.splice(index, 1);
+  localStorage.setItem('rounds', JSON.stringify(rounds));
+  showRoundHistory();
 }
 
 window.onload = function() {
