@@ -90,13 +90,19 @@
       font-size: 0.9rem;
     }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>PlaySkratch</h1>
-<center><h2> Road to Single Digits</h2></center>
+  <h1>PlaySkratch v1.3.2</h1>
+<center><h2> Road to single digits</h2></center>
+
   <div class="section">
     <button onclick="exportCoachPDF()">Export PDF for Coach</button>
 </div>
+<div class="section">
+  <button onclick="logRound()">Save Round</button>
+</div>
+
   <div class="section">
     <details open>
       <summary>Practice Log</summary>
@@ -164,11 +170,6 @@
     </details>
   </div>
 
-
-
-  <div class="sticky-save">
-    <button onclick="logRound()">Save Round</button>
-  </div>
 
   <script>
     function savePractice() {
@@ -389,6 +390,46 @@ function exportCoachPDF() {
       y += 6;
       if (y > 270) { doc.addPage(); y = 10; }
     });
+  }
+
+  const hcpLog = JSON.parse(localStorage.getItem('handicap') || '[]').reverse();
+  const last10 = hcpLog.slice(0, 10);
+  if (last10.length >= 2) {
+    const chartCanvas = document.createElement('canvas');
+    chartCanvas.width = 300;
+    chartCanvas.height = 150;
+    document.body.appendChild(chartCanvas);
+    const ctx = chartCanvas.getContext('2d');
+    const labels = last10.map(h => h.date);
+    const data = last10.map(h => h.index);
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Handicap Index',
+          data,
+          borderColor: '#D72638',
+          backgroundColor: 'rgba(215,38,56,0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+    await new Promise(res => setTimeout(res, 500));
+    const chartImg = chartCanvas.toDataURL('image/png');
+    doc.addPage();
+    doc.setFontSize(12);
+    doc.text('Handicap Index Graph', 10, 10);
+    doc.addImage(chartImg, 'PNG', 10, 20, 180, 90);
+    document.body.removeChild(chartCanvas);
   }
 
   doc.save(`PlaySkratch_Coach_Report_${latest.date}.pdf`);
