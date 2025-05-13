@@ -92,12 +92,11 @@
   </style>
 </head>
 <body>
-  <h1>PlaySkratch v1.3.2</h1>
-
+  <h1>PlaySkratch</h1>
+<center><h2> Road to Single Digits</h2></center>
   <div class="section">
     <button onclick="exportCoachPDF()">Export PDF for Coach</button>
-  </div>
-
+</div>
   <div class="section">
     <details open>
       <summary>Practice Log</summary>
@@ -153,6 +152,18 @@
     <div id="roundHistory" style="margin-top: 1rem;"></div>
   </details>
 </div>
+<div class="section">
+    <details>
+      <summary>Handicap Index Log</summary>
+      <label for="hcpDate">Date</label>
+      <input type="date" id="hcpDate" />
+      <label for="hcpIndex">Handicap Index</label>
+      <input type="number" id="hcpIndex" step="0.1" min="0" max="54" />
+      <button onclick="saveHandicap()">Log Handicap</button>
+      <div id="handicapHistory" style="margin-top: 1rem;"></div>
+    </details>
+  </div>
+
 
 
   <div class="sticky-save">
@@ -201,7 +212,8 @@
         ball: document.getElementById('roundBall').value,
         bag: document.getElementById('roundBag').value,
         weather: document.getElementById('roundWeather').value,
-        holes: []
+        holes: [],
+        par: []
       };
       for (let i = 1; i <= 18; i++) {
         const h = {
@@ -211,6 +223,7 @@
           putts: document.getElementById(`putts${i}`).value
         };
         round.holes.push(h);
+        round.par.push(parseInt(document.getElementById(`par${i}`).value) || 4);
       }
       const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
       rounds.push(round);
@@ -226,6 +239,7 @@
     div.innerHTML = `
       <label>Hole ${i}</label>
       <input type="number" id="score${i}" placeholder="Score" min="1" max="12" />
+      <input type="number" id="par${i}" placeholder="Par" min="3" max="6" />
       <select id="fir${i}">
         <option>FIR</option><option>✔</option><option>Left</option><option>Right</option><option>N/A</option>
       </select>
@@ -239,6 +253,7 @@
 }
 
 function exportCoachPDF() {
+  const latestPar = latest.par || [4,4,3,5,4,4,3,4,5,4,5,3,4,4,4,3,5,4];
   const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
   const practice = JSON.parse(localStorage.getItem('practice') || '[]');
   if (rounds.length === 0) return alert('No rounds logged.');
@@ -251,7 +266,8 @@ function exportCoachPDF() {
   doc.setFontSize(10);
   doc.text(`Date: ${latest.date}`, 10, 20);
   doc.text(`Course: ${latest.course}`, 10, 26);
-  doc.text(`Tee: ${latest.tee}`, 10, 32);
+  doc.text(`Tee: ${latest.tee} | Ball: ${latest.ball}`, 10, 32);
+
   doc.text(`Ball: ${latest.ball}`, 10, 38);
   doc.text(`Bag: ${latest.bag}`, 10, 44);
   doc.text(`Weather: ${latest.weather}`, 10, 50);
@@ -263,12 +279,22 @@ function exportCoachPDF() {
   let totalScore = 0;
   let frontScore = 0;
   let backScore = 0;
+  let parTotal = 0;
+  let parFront = 0;
+  let parBack = 0;
 
   latest.holes.forEach((h, i) => {
     const score = parseInt(h.score) || 0;
+    const p = latestPar[i];
     totalScore += score;
-    if (i < 9) frontScore += score;
-    else backScore += score;
+    parTotal += p;
+    if (i < 9) {
+      frontScore += score;
+      parFront += p;
+    } else {
+      backScore += score;
+      parBack += p;
+    }
 
     const line = `${i + 1}`.padEnd(5) + `${h.score}`.padEnd(7) + `${h.fir}`.padEnd(6) + `${h.gir}`.padEnd(6) + `${h.putts}`;
     doc.text(line, 10, y);
@@ -282,7 +308,14 @@ function exportCoachPDF() {
   y += 6;
   doc.text(`Back 9 Total: ${backScore}`, 10, y);
   y += 6;
-  doc.text(`Overall Total Score: ${totalScore}`, 10, y);
+  const diffFront = frontScore - parFront;
+  const diffBack = backScore - parBack;
+  const diffTotal = totalScore - parTotal;
+  doc.text(`Front 9 Total: ${frontScore} (Par ${parFront}) | ${diffFront === 0 ? 'E' : (diffFront > 0 ? '+' + diffFront : diffFront)}`, 10, y);
+  y += 6;
+  doc.text(`Back 9 Total: ${backScore} (Par ${parBack}) | ${diffBack === 0 ? 'E' : (diffBack > 0 ? '+' + diffBack : diffBack)}`, 10, y);
+  y += 6;
+  doc.text(`Overall Total Score: ${totalScore} (Par ${parTotal}) | ${diffTotal === 0 ? 'E' : (diffTotal > 0 ? '+' + diffTotal : diffTotal)}`, 10, y);
   y += 10;
 
   doc.setFontSize(12);
@@ -308,7 +341,16 @@ function exportCoachPDF() {
   doc.text('Last 5 Rounds', 10, y);
   y += 6;
 
-  const recentRounds = rounds.slice(-5).reverse();
+  const recentRounds = rounds
+    .map(r => {
+      let total = 0;
+      r.holes.forEach((h, i) => {
+        total += parseInt(h.score) || 0;
+      });
+      return { ...r, total };
+    })
+    .sort((a, b) => a.total - b.total)
+    .slice(0, 5);
   doc.setFontSize(10);
   if (recentRounds.length === 0) {
     doc.text('No rounds available.', 10, y);
@@ -321,10 +363,30 @@ function exportCoachPDF() {
         if (i < 9) front += s;
         else back += s;
       });
-      const summary = `${r.date} – ${r.course || 'Unknown Course'} | Front 9: ${front} | Back 9: ${back} | Total: ${total}`;
+      const pSum = r.par ? r.par.reduce((a, b) => a + b, 0) : 72;
+      const diff = total - pSum;
+      const diffText = diff === 0 ? 'E' : (diff > 0 ? `+${diff}` : diff);
+      const summary = `${r.date} – ${r.course || 'Unknown Course'} | Tee: ${r.tee || '-'} | Ball: ${r.ball || '-'} | Front 9: ${front} | Back 9: ${back} | Total: ${total} (${diffText})`;
       const lines = doc.splitTextToSize(summary, 180);
       doc.text(lines, 10, y);
       y += lines.length * 6;
+      if (y > 270) { doc.addPage(); y = 10; }
+    });
+  }
+
+  y += 10;
+  doc.setFontSize(12);
+  doc.text('Last 5 Handicap Index Entries', 10, y);
+  y += 6;
+
+  const hcp = JSON.parse(localStorage.getItem('handicap') || '[]').reverse().slice(0, 5);
+  doc.setFontSize(10);
+  if (hcp.length === 0) {
+    doc.text('No handicap entries.', 10, y);
+  } else {
+    hcp.forEach(h => {
+      doc.text(`${h.date} – Index: ${h.index.toFixed(1)}`, 10, y);
+      y += 6;
       if (y > 270) { doc.addPage(); y = 10; }
     });
   }
@@ -357,12 +419,41 @@ function exportCoachPDF() {
   });
 }
 
+function saveHandicap() {
+  const date = document.getElementById('hcpDate').value;
+  const index = parseFloat(document.getElementById('hcpIndex').value);
+  if (!date || isNaN(index)) {
+    alert('Please enter both date and handicap index.');
+    return;
+  }
+  const hcpLog = JSON.parse(localStorage.getItem('handicap') || '[]');
+  hcpLog.push({ date, index });
+  localStorage.setItem('handicap', JSON.stringify(hcpLog));
+  alert('Handicap logged!');
+  showHandicapHistory();
+}
+
+function showHandicapHistory() {
+  const container = document.getElementById('handicapHistory');
+  container.innerHTML = '';
+  const log = JSON.parse(localStorage.getItem('handicap') || '[]').reverse();
+  if (log.length === 0) {
+    container.innerHTML = '<p>No handicap entries yet.</p>';
+    return;
+  }
+  log.forEach(entry => {
+    const div = document.createElement('div');
+    div.innerHTML = `<strong>${entry.date}</strong> – Index: ${entry.index.toFixed(1)}<hr>`;
+    container.appendChild(div);
+  });
+}
+
 window.onload = function() {
       showPracticeSessions();
       buildHoleInputs();
       showRoundHistory();
+      showHandicapHistory();
     }
   </script>
 </body>
 </html>
-
