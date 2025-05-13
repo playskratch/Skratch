@@ -3,107 +3,169 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PlaySkratch v1.3.1</title>
+  <title>PlaySkratch v1.3.2</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
+    :root {
+      --primary: #D72638;
+      --bg: #fdfdfd;
+      --card: #ffffff;
+      --input: #f1f1f1;
+      --text: #111;
+    }
     body {
       font-family: Arial, sans-serif;
-      background: #0A1F14;
-      color: #fff;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
       padding: 1rem;
     }
-    h1, h2 {
-      color: #D72638;
+    h1 {
+      color: var(--primary);
       text-align: center;
+      margin-bottom: 1rem;
     }
     .section {
-      background: #111;
+      background: var(--card);
       padding: 1rem;
-      margin: 1.2rem 0;
+      margin-bottom: 1rem;
       border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     label {
+      font-weight: bold;
       display: block;
-      margin-top: 1rem;
+      margin: 1rem 0 0.3rem;
     }
     input, select, textarea {
       width: 100%;
-      padding: 0.75rem;
-      margin-top: 0.3rem;
-      border-radius: 6px;
-      border: 1px solid #444;
-      background-color: #222;
-      color: #fff;
+      padding: 1rem;
       font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: var(--input);
+      color: var(--text);
     }
     input:focus, select:focus, textarea:focus {
-      border-color: #D72638;
+      border-color: var(--primary);
       outline: none;
     }
     button {
-      font-size: 1rem;
+      display: block;
+      width: 100%;
       padding: 1rem;
-      background: #D72638;
-      color: white;
+      font-size: 1rem;
+      background: var(--primary);
+      color: #fff;
       border: none;
       border-radius: 6px;
       margin-top: 1rem;
       cursor: pointer;
-      width: 100%;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      font-size: 0.85rem;
-    }
-    th, td {
-      border: 1px solid #333;
-      padding: 0.4rem;
-      text-align: center;
-    }
-    th {
-      background-color: #222;
-    }
-    textarea.readonly {
-      background: #222;
-      color: #fff;
-      font-size: 0.9rem;
-    }
-    .scroll-table {
-      overflow-x: auto;
-    }
-    summary {
-      font-size: 1.1rem;
-      font-weight: bold;
+    details summary {
       cursor: pointer;
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .hole-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
       margin-bottom: 1rem;
     }
-    details[open] summary {
-      color: #D72638;
-    }
     .sticky-save {
-      position: sticky;
+      position: fixed;
       bottom: 0;
-      background: #111;
+      left: 0;
+      width: 100%;
+      background: var(--card);
       padding: 1rem;
-      border-top: 1px solid #333;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      z-index: 999;
+    }
+    textarea.readonly {
+      background: var(--input);
+      color: var(--text);
+      font-size: 0.9rem;
     }
   </style>
+</head>
+<body>
+  <h1>PlaySkratch v1.3.2</h1>
+
+  <div class="section">
+    <details open>
+      <summary>Practice Log</summary>
+      <label>Date</label>
+      <input type="date" id="practiceDate" />
+      <label>Type</label>
+      <select id="practiceType">
+        <option>Full Swing</option>
+        <option>Short Game</option>
+        <option>Putting</option>
+        <option>Wedge Matrix</option>
+      </select>
+      <label>Clubs Used</label>
+      <input type="text" id="practiceClubs" placeholder="e.g., 7i, 56°, Driver" />
+      <label>Notes</label>
+      <textarea id="practiceNotes" rows="3"></textarea>
+      <button onclick="savePractice()">Log Practice</button>
+      <div id="practiceHistory" style="margin-top: 1rem;"></div>
+    </details>
+  </div>
+
+  <div class="section">
+    <details>
+      <summary>Round Setup</summary>
+      <label>Date</label>
+      <input type="date" id="roundDate" />
+      <label>Course</label>
+      <input type="text" id="roundCourse" placeholder="e.g., Cheadle Golf Club" />
+      <label>Tee</label>
+      <select id="roundTee">
+        <option>Yellow</option>
+        <option>White</option>
+      </select>
+      <label>Ball</label>
+      <input type="text" id="roundBall" />
+      <label>Bag</label>
+      <input type="text" id="roundBag" />
+      <label>Weather / Notes</label>
+      <textarea id="roundWeather" rows="3"></textarea>
+    </details>
+  </div>
+
+  <div class="section">
+    <details>
+      <summary>Hole-by-Hole</summary>
+      <div id="holesContainer"></div>
+    </details>
+  </div>
+
+  <div class="section">
+    <button onclick="exportCoachPDF()">Export PDF for Coach</button>
+  </div>
+
+  <div class="sticky-save">
+    <button onclick="logRound()">Save Round</button>
+  </div>
+
   <script>
     function savePractice() {
-      const date = document.getElementById('practiceDate').value;
-      const type = document.getElementById('practiceType').value;
-      const clubs = document.getElementById('practiceClubs').value;
-      const notes = document.getElementById('practiceNotes').value;
-      if (!date || !type || !clubs) {
+      const data = {
+        date: document.getElementById('practiceDate').value,
+        type: document.getElementById('practiceType').value,
+        clubs: document.getElementById('practiceClubs').value,
+        notes: document.getElementById('practiceNotes').value
+      };
+      if (!data.date || !data.type || !data.clubs) {
         alert('Please fill in all required fields.');
         return;
       }
-      const newSession = { date, type, clubs, notes };
-      let practiceData = [];
-      try { practiceData = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
-      practiceData.push(newSession);
-      localStorage.setItem('practice', JSON.stringify(practiceData));
+      const sessions = JSON.parse(localStorage.getItem('practice') || '[]');
+      sessions.push(data);
+      localStorage.setItem('practice', JSON.stringify(sessions));
       alert('Practice logged!');
       showPracticeSessions();
     }
@@ -111,18 +173,15 @@
     function showPracticeSessions() {
       const container = document.getElementById('practiceHistory');
       container.innerHTML = '';
-      let sessions = [];
-      try { sessions = JSON.parse(localStorage.getItem('practice')) || []; } catch (e) {}
+      const sessions = JSON.parse(localStorage.getItem('practice') || '[]').reverse();
       if (sessions.length === 0) {
-        container.innerHTML = '<p>No practice sessions yet.</p>';
+        container.innerHTML = '<p>No sessions yet.</p>';
         return;
       }
-      sessions.reverse().forEach(session => {
-        const entry = document.createElement('div');
-        entry.innerHTML = `<strong>${session.date}</strong> – ${session.type}<br/>
-                          Clubs: ${session.clubs}<br/>
-                          Notes: ${session.notes || '-'}<hr/>`;
-        container.appendChild(entry);
+      sessions.forEach(s => {
+        const div = document.createElement('div');
+        div.innerHTML = `<strong>${s.date}</strong> – ${s.type}<br>Clubs: ${s.clubs}<br>Notes: ${s.notes || '-'}<hr>`;
+        container.appendChild(div);
       });
     }
 
@@ -137,132 +196,112 @@
         holes: []
       };
       for (let i = 1; i <= 18; i++) {
-        const hole = {
+        const h = {
           score: document.getElementById(`score${i}`).value,
           fir: document.getElementById(`fir${i}`).value,
           gir: document.getElementById(`gir${i}`).value,
-          putts: document.getElementById(`putts${i}`).value,
-          updown: document.getElementById(`updown${i}`).value,
-          club: document.getElementById(`club${i}`).value,
-          notes: document.getElementById(`notes${i}`).value
+          putts: document.getElementById(`putts${i}`).value
         };
-        round.holes.push(hole);
+        round.holes.push(h);
       }
-      let rounds = [];
-      try { rounds = JSON.parse(localStorage.getItem('rounds')) || []; } catch (e) {}
+      const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
       rounds.push(round);
       localStorage.setItem('rounds', JSON.stringify(rounds));
       alert('Round saved!');
     }
 
-    function exportAllData() {
-      const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
-      const practice = JSON.parse(localStorage.getItem('practice') || '[]');
-      const bag = localStorage.getItem('bag') || '';
-      const data = { rounds, practice, bag };
-      const jsonString = JSON.stringify(data, null, 2);
-      document.getElementById('jsonOutput').value = jsonString;
-      const subject = encodeURIComponent("PlaySkratch Data Export");
-      const body = encodeURIComponent(jsonString);
-      document.getElementById('emailLink').href = `mailto:?subject=${subject}&body=${body}`;
-      document.getElementById('emailBlock').style.display = 'block';
+    function buildHoleInputs() {
+  const container = document.getElementById('holesContainer');
+  for (let i = 1; i <= 18; i++) {
+    const div = document.createElement('div');
+    div.className = 'hole-row';
+    div.innerHTML = `
+      <label>Hole ${i}</label>
+      <input type="number" id="score${i}" placeholder="Score" min="1" max="12" />
+      <select id="fir${i}">
+        <option>FIR</option><option>✔</option><option>Left</option><option>Right</option><option>N/A</option>
+      </select>
+      <select id="gir${i}">
+        <option>GIR</option><option>✔</option><option>Short</option><option>Long</option><option>Left</option><option>Right</option>
+      </select>
+      <input type="number" id="putts${i}" placeholder="Putts" min="0" max="5" />
+    `;
+    container.appendChild(div);
+  }
+}
+
+function exportCoachPDF() {
+  const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
+  const practice = JSON.parse(localStorage.getItem('practice') || '[]');
+  if (rounds.length === 0) return alert('No rounds logged.');
+
+  const doc = new jspdf.jsPDF();
+  const latest = rounds[rounds.length - 1];
+
+  doc.setFontSize(14);
+  doc.text(`PlaySkratch Coach Report`, 10, 10);
+  doc.setFontSize(10);
+  doc.text(`Date: ${latest.date}`, 10, 20);
+  doc.text(`Course: ${latest.course}`, 10, 26);
+  doc.text(`Tee: ${latest.tee}`, 10, 32);
+  doc.text(`Ball: ${latest.ball}`, 10, 38);
+  doc.text(`Bag: ${latest.bag}`, 10, 44);
+  doc.text(`Weather: ${latest.weather}`, 10, 50);
+
+  let y = 60;
+  doc.text('Hole  Score  FIR  GIR  Putts', 10, y);
+  y += 6;
+
+  let totalScore = 0;
+  let frontScore = 0;
+  let backScore = 0;
+
+  latest.holes.forEach((h, i) => {
+    const score = parseInt(h.score) || 0;
+    totalScore += score;
+    if (i < 9) frontScore += score;
+    else backScore += score;
+
+    const line = `${i + 1}`.padEnd(5) + `${h.score}`.padEnd(7) + `${h.fir}`.padEnd(6) + `${h.gir}`.padEnd(6) + `${h.putts}`;
+    doc.text(line, 10, y);
+    y += 6;
+    if (y > 270) { doc.addPage(); y = 10; }
+  });
+
+  y += 4;
+  doc.setFontSize(11);
+  doc.text(`Front 9 Total: ${frontScore}`, 10, y);
+  y += 6;
+  doc.text(`Back 9 Total: ${backScore}`, 10, y);
+  y += 6;
+  doc.text(`Overall Total Score: ${totalScore}`, 10, y);
+  y += 10;
+
+  doc.setFontSize(12);
+  doc.text('Last 5 Practice Sessions', 10, y);
+  y += 6;
+
+  const recentPractice = practice.reverse().slice(0, 5);
+  doc.setFontSize(10);
+  if (recentPractice.length === 0) {
+    doc.text('No practice sessions logged.', 10, y);
+  } else {
+    recentPractice.forEach((p) => {
+      const text = `${p.date} – ${p.type} | Clubs: ${p.clubs} | Notes: ${p.notes || '-'}`;
+      const lines = doc.splitTextToSize(text, 180);
+      doc.text(lines, 10, y);
+      y += lines.length * 6;
+      if (y > 270) { doc.addPage(); y = 10; }
+    });
+  }
+
+  doc.save(`PlaySkratch_Coach_Report_${latest.date}.pdf`);
     }
 
-    function copyJSON() {
-      const textarea = document.getElementById('jsonOutput');
-      textarea.select();
-      document.execCommand('copy');
-      alert('JSON copied to clipboard!');
+    window.onload = function() {
+      showPracticeSessions();
+      buildHoleInputs();
     }
-
-    window.onload = showPracticeSessions;
   </script>
-</head>
-<body>
-  <h1>PlaySkratch v1.3.1</h1>
-
-  <div class="section">
-    <details open>
-      <summary>Practice Log</summary>
-      <label>Date</label>
-      <input id="practiceDate" type="date" />
-      <label>Type</label>
-      <select id="practiceType">
-        <option>Full Swing</option>
-        <option>Short Game</option>
-        <option>Putting</option>
-        <option>Wedge Matrix</option>
-      </select>
-      <label>Clubs Used</label>
-      <input id="practiceClubs" type="text" placeholder="e.g., 7i, 56°, Driver" />
-      <label>Notes</label>
-      <textarea id="practiceNotes" rows="3"></textarea>
-      <button onclick="savePractice()">Log Practice</button>
-      <div id="practiceHistory" style="margin-top:1rem;"></div>
-    </details>
-  </div>
-
-  <div class="section">
-    <details>
-      <summary>Round Setup</summary>
-      <label>Date</label>
-      <input type="date" id="roundDate" />
-      <label>Course</label>
-      <input type="text" id="roundCourse" placeholder="e.g., Cheadle Golf Club" />
-      <label>Tee</label>
-      <select id="roundTee">
-        <option value="Yellow">Yellow</option>
-        <option value="White">White</option>
-      </select>
-      <label>Ball</label>
-      <input type="text" id="roundBall" />
-      <label>Bag</label>
-      <input type="text" id="roundBag" />
-      <label>Weather / Notes</label>
-      <textarea id="roundWeather" rows="3"></textarea>
-    </details>
-  </div>
-
-  <div class="section">
-    <details>
-      <summary>Hole-by-Hole Tracking</summary>
-      <div class="scroll-table">
-        <table>
-          <tr>
-            <th>Hole</th><th>Score</th><th>FIR</th><th>GIR</th><th>Putts</th><th>Up&Dn</th><th>Club</th><th>Notes</th>
-          </tr>
-          <script>
-            for (let i = 1; i <= 18; i++) {
-              document.write('<tr>' +
-                '<td>' + i + '</td>' +
-                `<td><input id="score${i}" type="number" min="1" max="12" /></td>` +
-                `<td><select id="fir${i}"><option>-</option><option>✔</option><option>Left</option><option>Right</option><option>N/A</option></select></td>` +
-                `<td><select id="gir${i}"><option>-</option><option>✔</option><option>Short</option><option>Long</option><option>Left</option><option>Right</option></select></td>` +
-                `<td><input id="putts${i}" type="number" min="0" max="5" /></td>` +
-                `<td><select id="updown${i}"><option>-</option><option>✔</option><option>✘</option></select></td>` +
-                `<td><input id="club${i}" type="text" /></td>` +
-                `<td><input id="notes${i}" type="text" /></td>` +
-              '</tr>');
-            }
-          </script>
-        </table>
-      </div>
-      <div class="sticky-save">
-        <button onclick="logRound()">Save Round</button>
-      </div>
-    </details>
-  </div>
-
-  <div class="section">
-    <details>
-      <summary>Data Management</summary>
-      <button onclick="exportAllData()">Send All Data via Email</button>
-      <div id="emailBlock" style="display:none; margin-top: 1rem;">
-        <textarea id="jsonOutput" class="readonly" rows="10" readonly></textarea>
-        <button onclick="copyJSON()">Copy JSON</button>
-        <a id="emailLink" target="_blank">Open Email App</a>
-      </div>
-    </details>
-  </div>
 </body>
 </html>
