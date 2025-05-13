@@ -93,15 +93,15 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>PlaySkratch v1.3.2</h1>
-<center><h2> Road to single digits</h2></center>
+  <h1>PlaySkratch</h1>
 
   <div class="section">
     <button onclick="exportCoachPDF()">Export PDF for Coach</button>
 </div>
-<div class="section">
-  <button onclick="logRound()">Save Round</button>
-</div>
+
+  <div class="section">
+    <button onclick="logRound()">Save Round</button>
+  </div>
 
   <div class="section">
     <details open>
@@ -169,6 +169,7 @@
       <div id="handicapHistory" style="margin-top: 1rem;"></div>
     </details>
   </div>
+
 
 
   <script>
@@ -253,14 +254,14 @@
   }
 }
 
-function exportCoachPDF() {
-  const latestPar = latest.par || [4,4,3,5,4,4,3,4,5,4,5,3,4,4,4,3,5,4];
+async function exportCoachPDF() {
   const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
   const practice = JSON.parse(localStorage.getItem('practice') || '[]');
   if (rounds.length === 0) return alert('No rounds logged.');
 
   const doc = new jspdf.jsPDF();
   const latest = rounds[rounds.length - 1];
+  const latestPar = latest.par || [4,4,3,5,4,4,3,4,5,4,5,3,4,4,4,3,5,4];
 
   doc.setFontSize(14);
   doc.text(`PlaySkratch Coach Report`, 10, 10);
@@ -269,7 +270,7 @@ function exportCoachPDF() {
   doc.text(`Course: ${latest.course}`, 10, 26);
   doc.text(`Tee: ${latest.tee} | Ball: ${latest.ball}`, 10, 32);
 
-  doc.text(`Ball: ${latest.ball}`, 10, 38);
+
   doc.text(`Bag: ${latest.bag}`, 10, 44);
   doc.text(`Weather: ${latest.weather}`, 10, 50);
 
@@ -305,10 +306,7 @@ function exportCoachPDF() {
 
   y += 4;
   doc.setFontSize(11);
-  doc.text(`Front 9 Total: ${frontScore}`, 10, y);
-  y += 6;
-  doc.text(`Back 9 Total: ${backScore}`, 10, y);
-  y += 6;
+
   const diffFront = frontScore - parFront;
   const diffBack = backScore - parBack;
   const diffTotal = totalScore - parTotal;
