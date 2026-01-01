@@ -1,68 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Skratch Yardage Book - Cheadle GC</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="icon" href="skratch.png" type="image/png">
-  <link rel="apple-touch-icon" href="skratch.png" sizes="180x180">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Yardage Book">
-  <style>
-    body { font-family: sans-serif; background: #f8f9fa; padding: 1rem; }
-    #map { height: 300px; border: 2px solid #95d5b2; border-radius: 12px; margin: 1rem 0; }
-    #weatherBox, #adminControls { background: #fff; border: 2px solid #95d5b2; padding: 1rem; border-radius: 10px; margin: 1rem auto; max-width: 300px; text-align: center; font-weight: bold; }
-    #distanceDisplay, #holeInfo { text-align: center; font-weight: bold; margin: 1rem 0; }
-    #locationPrompt {
-      background: white;
-      border: 2px solid #95d5b2;
-      border-radius: 10px;
-      padding: 1rem;
-      text-align: center;
-      margin: 1rem auto;
-      max-width: 300px;
-      display: none;
-    }
-    select, button {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 0.8rem;
-      border: 2px solid #95d5b2;
-      border-radius: 10px;
-      font-size: 1rem;
-    }
-    button { background-color: #2d6a4f; color: white; font-weight: 600; }
-    button:hover { background-color: #40916c; }
-    #compass {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: white;
-      border: 2px solid #95d5b2;
-      border-radius: 50%;
-      width: 70px;
-      height: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #2d6a4f;
-    }
-    footer { text-align: center; font-size: 0.85rem; color: #6c757d; margin-top: 2rem; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yardage Book – Cheadle GC</title>
+
+<link rel="icon" href="skratch.png" type="image/png">
+<link rel="apple-touch-icon" href="skratch.png" sizes="180x180">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Yardage Book">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+:root{
+  --accent:#2d6a4f;
+  --bg:#f5f6f7;
+  --card:rgba(255,255,255,0.85);
+  --border:rgba(0,0,0,0.06);
+  --text:#1d1d1f;
+  --muted:#6e6e73;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  padding:1rem;
+  padding-bottom:7rem;
+  background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Helvetica,Arial,sans-serif;
+  color:var(--text);
+}
+
+h1{
+  text-align:center;
+  font-size:1.6rem;
+  font-weight:700;
+  margin:.5rem 0 .25rem;
+}
+
+.card{
+  background:var(--card);
+  backdrop-filter:blur(14px);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:1rem;
+  margin:.75rem auto;
+  max-width:420px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(0,0,0,.08);
+}
+
+#yardageStatusTop{
+  text-align:center;
+  font-weight:700;
+  color:var(--muted);
+  margin:.25rem auto .5rem;
+}
+
+#map{
+  height:320px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  overflow:hidden;
+  margin:1rem auto;
+  max-width:420px;
+}
+
+select,button{
+  width:100%;
+  padding:.75rem 1rem;
+  border-radius:14px;
+  font-size:1rem;
+  font-weight:600;
+  border:1px solid var(--border);
+  background:white;
+}
+
+button{
+  background:var(--accent);
+  color:white;
+  border:none;
+  box-shadow:0 6px 16px rgba(45,106,79,.35);
+  margin-top:.5rem;
+}
+
+button.secondary{
+  background:white;
+  color:var(--accent);
+  box-shadow:none;
+}
+
+button:active{transform:scale(.97)}
+
+#distanceDisplay{
+  text-align:center;
+  font-size:1.3rem;
+  font-weight:700;
+  margin-top:.5rem;
+}
+
+#clubSuggestion{
+  text-align:center;
+  margin-top:.4rem;
+  font-weight:700;
+  color:var(--accent);
+}
+
+#holeInfo{
+  text-align:center;
+  font-size:.95rem;
+  color:var(--muted);
+}
+
+/* Weather */
+#weatherBox{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.75rem;
+}
+
+#weatherBox img{
+  width:54px;
+  height:54px;
+}
+
+/* Compass */
+#compass{
+  position:fixed;
+  bottom:95px;
+  right:18px;
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  background:rgba(255,255,255,.9);
+  border:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  color:var(--accent);
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+/* Footer */
+.footerBar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(255,255,255,.85);
+  backdrop-filter:blur(14px);
+  border-top:1px solid var(--border);
+  padding:.75rem 1rem;
+}
+
+.footerInner{ max-width:420px; margin:auto; }
+
+.footerRow{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:.5rem;
+}
+
+.footerText{
+  font-size:.75rem;
+  color:var(--muted);
+  text-align:center;
+  margin-top:.5rem;
+}
+
+.footerActions{
+  display:flex;
+  gap:.4rem;
+}
+
+.footerActions button{
+  width:auto;
+  padding:.5rem .75rem;
+  border-radius:999px;
+  font-size:.85rem;
+  margin-top:0;
+}
+
+.footerHint{
+  font-size:.75rem;
+  color:var(--muted);
+  margin-top:.4rem;
+}
+
+.footerHint a{
+  color:var(--accent);
+  font-weight:700;
+  text-decoration:none;
+}
+
+#adminBadge{
+  display:none;
+  font-size:.75rem;
+  font-weight:700;
+  color:var(--accent);
+}
+</style>
 </head>
+
 <body>
-  <h1>Skratch Yard Book</h1>
-  <div id="weatherBox">Loading weather...</div>
-  <div id="adminControls">
-    <button onclick="toggleAdminMode()">🔒 Admin Login</button>
-    <div id="adminBadge" style="display:none;">Admin Mode Active</div>
-  </div>
-  <div id="map"></div>
+
+<h1>Yardage Book</h1>
+<div id="yardageStatusTop">Club Yardages: Not loaded</div>
+
+<div id="weatherBox" class="card">Loading weather…</div>
+
+<div id="map"></div>
+
+<div class="card">
   <select id="holeSelect" onchange="showHoleLayout()">
-    <option value="">-- Select Hole --</option>
+    <option value="">Select Hole</option>
     <option value="1">Hole 1</option>
     <option value="2">Hole 2</option>
     <option value="3">Hole 3</option>
@@ -74,190 +229,238 @@
     <option value="9">Hole 9</option>
     <option value="Practice">Practice Area</option>
   </select>
+
   <div id="holeInfo">Select a hole to view details</div>
   <div id="distanceDisplay">Distance: --</div>
-  
-  <!-- 📍 Location Access Prompt -->
-  <div id="locationPrompt">
-    <p>📍 To enable accurate distances, allow location access.</p>
-    <button onclick="requestLocationAccess()">Enable Location</button>
+  <div id="clubSuggestion">Suggested Club: --</div>
+
+  <button class="secondary" onclick="openYardageSheet()">📊 View Yardages</button>
+</div>
+
+<div id="saveButtons" class="card" style="display:none">
+  <button>📍 Save Green Center</button>
+  <button>⚪ Save White Tee</button>
+  <button>🟡 Save Yellow Tee</button>
+  <button class="secondary">📤 Export Yardage Data</button>
+</div>
+
+<button onclick="enableCompass()">🧭 Enable Compass</button>
+<div id="compass">--</div>
+
+<input type="file" id="yardageFile" accept=".json" style="display:none">
+
+<!-- Footer -->
+<div class="footerBar">
+  <div class="footerInner">
+    <div class="footerRow">
+        <div class="footerActions">
+      <span id="adminBadge">Admin</span>
+      <button class="secondary"
+        title="Add YardageBook.json"
+        onclick="document.getElementById('yardageFile').click()">➕</button>
+
+<button class="secondary"
+        title="Clear stored club yardages"
+        onclick="clearYardageBook()">🗑️</button>
+
+<button class="secondary"
+        title="Admin tools"
+        onclick="toggleAdminMode()">🔒</button>
+      </div>
+    </div>
+    <div class="footerHint">
+      ForeThought export • Create one at
+      <a href="http://forethought.site/yardagebook.html" target="_blank">forethought.site/yardagebook.html</a>
+    </div>
+    <br/>
+  <div class="footerText">Powered by <a href="http://forethought.site" target="_blank">ForeThought.site</a>  • An Apple Geek Product</div>
   </div>
+</div>
 
-  <div id="saveButtons" style="display: none;">
-    <button onclick="saveGreenCenter()">📍 Save Green Center</button>
-    <button onclick="saveWhiteTee()">⚪ Save White Tee Marker</button>
-    <button onclick="saveYellowTee()">🟡 Save Yellow Tee Marker</button>
-    <button onclick="downloadGreenCenters()">📤 Export Yardage Data</button>
+<!-- Yardage Sheet -->
+<div id="yardageSheet" style="
+  position:fixed; inset:0; display:none;
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(6px);
+  align-items:flex-end; justify-content:center;
+  z-index:2000;">
+  <div style="
+    background:rgba(255,255,255,.96);
+    border-radius:20px 20px 0 0;
+    width:100%; max-width:420px;
+    padding:1rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+      <strong>Yardages</strong>
+      <button class="secondary" onclick="closeYardageSheet()">Done</button>
+    </div>
+    <div id="yardageList" style="max-height:55vh;overflow-y:auto"></div>
   </div>
-  <button onclick="enableCompass()">🧭 Enable Compass</button>
-  <div id="compass">--</div>
-  <footer>Powered by Skratch • An Apple Geek Product</footer>
+</div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    let isAdmin = false;
-    const adminPasscode = "2024";
-    const holeMeta = {
-      1: { par: 4, yellow: 296, white: 307 }, 2: { par: 3, yellow: 168, white: 171 }, 3: { par: 4, yellow: 296, white: 328 },
-      4: { par: 4, yellow: 411, white: 421 }, 5: { par: 3, yellow: 97,  white: 97  }, 6: { par: 4, yellow: 431, white: 437 },
-      7: { par: 3, yellow: 170, white: 170 }, 8: { par: 4, yellow: 404, white: 404 }, 9: { par: 3, yellow: 160, white: 160 },
-      Practice: { par: 2, yellow: 65, white: 78 } 
-    };
-    const yardageData = {
-      "1": { "yellowTee": { "lat": 53.388032, "lng": -2.206669 }, "whiteTee": { "lat": 53.388113, "lng": -2.206700 }, "green": { "lat": 53.385712, "lng": -2.205569 } },
-      "2": { "yellowTee": { "lat": 53.386269, "lng": -2.205275 }, "whiteTee": { "lat": 53.386272, "lng": -2.205266 }, "green": { "lat": 53.385069, "lng": -2.206453 } },
-      "3": { "yellowTee": { "lat": 53.385841, "lng": -2.206644 }, "whiteTee": { "lat": 53.386122, "lng": -2.206867 }, "green": { "lat": 53.383919, "lng": -2.204562 } },
-      "4": { "yellowTee": { "lat": 53.384253, "lng": -2.203065 }, "whiteTee": { "lat": 53.384254, "lng": -2.203140 }, "green": { "lat": 53.387625, "lng": -2.202824 } },
-      "5": { "yellowTee": { "lat": 53.387822, "lng": -2.202733 }, "whiteTee": { "lat": 53.387820, "lng": -2.202718 }, "green": { "lat": 53.387667, "lng": -2.203872 } },
-      "6": { "yellowTee": { "lat": 53.387935, "lng": -2.203399 }, "whiteTee": { "lat": 53.388148, "lng": -2.203193 }, "green": { "lat": 53.384237, "lng": -2.203861 } },
-      "7": { "yellowTee": { "lat": 53.384242, "lng": -2.204215 }, "whiteTee": { "lat": 53.384161, "lng": -2.204177 }, "green": { "lat": 53.385387, "lng": -2.205308 } },
-      "8": { "yellowTee": { "lat": 53.384578, "lng": -2.204295 }, "whiteTee": { "lat": 53.384180, "lng": -2.204066 }, "green": { "lat": 53.387473, "lng": -2.204850 } },
-      "9": { "yellowTee": { "lat": 53.387628, "lng": -2.204252 }, "whiteTee": { "lat": 53.387703, "lng": -2.204087 }, "green": { "lat": 53.387958, "lng": -2.206264 } },
-      "Practice": { "yellowTee": { "lat": 53.38755993212059, "lng": -2.2055597746396662 }, "whiteTee": { "lat": 53.387540325569944, "lng": -2.2057653650159716 }, "green": { "lat": 53.38702520975405, "lng":  -2.2054895310942686 }}
-    };
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const adminPasscode="2024";
+let yardageBook=null;
 
-    let map = L.map('map').setView([53.387, -2.205], 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
-    let userMarker = null;
-    let markers = [];
+/* Status */
+function setStatus(t,ok){
+  const el=document.getElementById("yardageStatusTop");
+  el.textContent=t;
+  el.style.color=ok?"var(--accent)":"var(--muted)";
+}
 
-    function toggleAdminMode() {
-      const entered = prompt("Enter Admin Passcode:");
-      if (entered === adminPasscode) {
-        isAdmin = true;
-        document.getElementById("saveButtons").style.display = "block";
-        document.getElementById("adminBadge").style.display = "inline-block";
-      } else {
-        alert("Incorrect passcode.");
-      }
+/* Storage */
+function validateBook(j){
+  return j?.type==="yardageBook" && j?.source==="ForeThought" &&
+    Array.isArray(j.clubs) && j.clubs.every(c=>typeof c.name==="string" && typeof c.carry==="number");
+}
+
+(function loadBook(){
+  try{
+    const raw=localStorage.getItem("yardageBookJSON");
+    if(!raw) return setStatus("YardageBook: Not loaded",false);
+    const j=JSON.parse(raw);
+    if(!validateBook(j)) throw 0;
+    yardageBook=j;
+    setStatus("YardageBook: Loaded ✅",true);
+  }catch{
+    localStorage.removeItem("yardageBookJSON");
+    setStatus("YardageBook: Not loaded",false);
+  }
+})();
+
+document.getElementById("yardageFile").onchange=e=>{
+  const f=e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    const j=JSON.parse(r.result);
+    if(!validateBook(j)) return alert("Invalid ForeThought YardageBook");
+    yardageBook=j;
+    localStorage.setItem("yardageBookJSON",JSON.stringify(j));
+    setStatus("YardageBook: Loaded ✅",true);
+    showHoleLayout();
+  };
+  r.readAsText(f);
+};
+
+function clearYardageBook(){
+  if(!confirm("Clear stored YardageBook?")) return;
+  localStorage.removeItem("yardageBookJSON");
+  yardageBook=null;
+  setStatus("YardageBook: Not loaded",false);
+  document.getElementById("clubSuggestion").innerText="Suggested Club: --";
+}
+
+/* Club logic */
+function suggestClub(y){
+  if(!yardageBook) return null;
+  let best=null, diff=Infinity;
+  yardageBook.clubs.forEach(c=>{
+    const d=Math.abs(c.carry-y);
+    if(d<=10 && d<diff){best=c;diff=d;}
+  });
+  return best;
+}
+
+/* Yardage sheet */
+function openYardageSheet(){
+  if(!yardageBook) return alert("No YardageBook loaded");
+  const list=document.getElementById("yardageList");
+  list.innerHTML="";
+  const m=document.getElementById("distanceDisplay").innerText.match(/(\d+)/);
+  const y=m?parseInt(m[1]):null;
+  const s=y?suggestClub(y):null;
+
+  yardageBook.clubs.forEach(c=>{
+    const hl=s && s.name===c.name;
+    list.innerHTML+=`
+      <div style="display:flex;justify-content:space-between;padding:.6rem 0;
+                  border-bottom:1px solid #eee;font-weight:${hl?"800":"600"};
+                  color:${hl?"var(--accent)":"inherit"}">
+        <div>${c.name}</div>
+        <div style="font-size:.9rem;color:${hl?"var(--accent)":"var(--muted)"}">
+          ${c.carry}y • ${c.total??""}
+        </div>
+      </div>`;
+  });
+  document.getElementById("yardageSheet").style.display="flex";
+}
+function closeYardageSheet(){document.getElementById("yardageSheet").style.display="none";}
+
+/* Map + distance */
+const greens={
+  "1":[53.385712,-2.205569],"2":[53.385069,-2.206453],"3":[53.383919,-2.204562],
+  "4":[53.387625,-2.202824],"5":[53.387667,-2.203872],"6":[53.384237,-2.203861],
+  "7":[53.385387,-2.205308],"8":[53.387473,-2.20485],"9":[53.387958,-2.206264]
+};
+
+let map=L.map("map").setView([53.387,-2.205],17);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19}).addTo(map);
+let userMarker=null;
+
+navigator.geolocation.watchPosition(p=>{
+  const {latitude,longitude}=p.coords;
+  userMarker?userMarker.setLatLng([latitude,longitude]):
+    userMarker=L.marker([latitude,longitude]).addTo(map);
+  showHoleLayout();
+});
+
+function showHoleLayout(){
+  const h=holeSelect.value;
+  if(!h||!greens[h]||!userMarker) return;
+  const g={lat:greens[h][0],lng:greens[h][1]};
+  const d=getDistance(userMarker.getLatLng(),g);
+  const y=Math.round(d*1.09361);
+  distanceDisplay.innerText=`Distance: ${y} yards`;
+  const c=suggestClub(y);
+  clubSuggestion.innerText=c?`Suggested Club: ${c.name} • ${c.carry}y carry`:"Suggested Club: --";
+}
+
+function getDistance(a,b){
+  const R=6371e3,toRad=x=>x*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat),dLon=toRad(b.lng-a.lng);
+  return R*2*Math.atan2(
+    Math.sqrt(Math.sin(dLat/2)**2+
+    Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLon/2)**2),
+    Math.sqrt(1)
+  );
+}
+
+/* Admin */
+function toggleAdminMode(){
+  if(prompt("Admin Passcode")==adminPasscode){
+    saveButtons.style.display="block";
+    adminBadge.style.display="inline";
+  }
+}
+
+/* Weather */
+async function loadWeather(){
+  const r=await fetch("https://api.openweathermap.org/data/2.5/weather?lat=53.387&lon=-2.205&units=metric&appid=e583bd0c194bbfeb3deb92f6bfdad11a");
+  const d=await r.json();
+  const temp=Math.round(d.main.temp);
+  const wind=Math.round(d.wind.speed*2.237);
+  const dir=["N","NE","E","SE","S","SW","W","NW"][Math.round(d.wind.deg/45)%8];
+  weatherBox.innerHTML=`
+    <img src="https://openweathermap.org/img/wn/${d.weather[0].icon}@2x.png">
+    <div><strong>Cheadle GC</strong><br>
+    ${temp}°C • ${d.weather[0].description}<br>
+    Wind: ${wind} mph ${dir}</div>`;
+}
+loadWeather();
+
+/* Compass */
+function enableCompass(){
+  window.addEventListener("deviceorientation",e=>{
+    if(e.alpha!=null){
+      const dirs=["N","NE","E","SE","S","SW","W","NW"];
+      compass.innerText=dirs[Math.round(e.alpha/45)%8];
+      compass.style.transform=`rotate(${-e.alpha}deg)`;
     }
+  });
+}
+</script>
 
-    function requestLocationAccess() {
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          document.getElementById("locationPrompt").style.display = "none";
-        },
-        (err) => {
-          alert("Location access denied or unavailable.");
-          console.warn("Denied:", err.message);
-        },
-        { enableHighAccuracy: true }
-      );
-    }
-
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: "geolocation" }).then((result) => {
-        if (result.state === "granted") {
-          requestLocationAccess();
-        } else if (result.state === "prompt") {
-          document.getElementById("locationPrompt").style.display = "block";
-        }
-      });
-    }
-
-    navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        if (!userMarker) {
-          userMarker = L.marker([latitude, longitude], { title: 'Your Location' }).addTo(map);
-        } else {
-          userMarker.setLatLng([latitude, longitude]);
-        }
-        showHoleLayout();
-      },
-      (err) => console.warn("GPS Error:", err.message),
-      { enableHighAccuracy: true }
-    );
-
-    function showHoleLayout() {
-      const hole = document.getElementById('holeSelect').value;
-      document.getElementById('holeInfo').innerText = holeMeta[hole]
-        ? `Hole ${hole} • Par ${holeMeta[hole].par} • Yellow: ${holeMeta[hole].yellow} yds • White: ${holeMeta[hole].white} yds`
-        : 'Select a hole to view details';
-
-      markers.forEach(m => map.removeLayer(m));
-      markers = [];
-
-      if (!hole || !yardageData[hole]) return;
-
-      const data = yardageData[hole];
-      const tee = data.whiteTee || data.yellowTee;
-      const green = data.green;
-
-      if (tee) markers.push(L.marker([tee.lat, tee.lng], { title: 'Tee' }).addTo(map));
-      if (green) markers.push(L.marker([green.lat, green.lng], { title: 'Green' }).addTo(map));
-
-      if (tee && green) {
-        const line = L.polyline([[tee.lat, tee.lng], [green.lat, green.lng]], { color: '#2d6a4f', weight: 4 }).addTo(map);
-        markers.push(line);
-        map.fitBounds(line.getBounds(), { padding: [30, 30] });
-
-        if (userMarker) {
-          const dist = getDistance(userMarker.getLatLng().lat, userMarker.getLatLng().lng, green.lat, green.lng);
-          document.getElementById('distanceDisplay').innerText = `Distance: ${(dist * 1.09361).toFixed(0)} yards`;
-        } else {
-          document.getElementById('distanceDisplay').innerText = `Distance: --`;
-        }
-      }
-    }
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const toRad = deg => deg * Math.PI / 180;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    function enableCompass() {
-      if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission()
-          .then(response => {
-            if (response === 'granted') {
-              window.addEventListener('deviceorientation', handleOrientation, true);
-            } else {
-              alert('Permission denied for compass.');
-            }
-          })
-          .catch(console.error);
-      } else {
-        window.addEventListener('deviceorientation', handleOrientation, true);
-      }
-    }
-
-    function handleOrientation(event) {
-      const compass = document.getElementById("compass");
-      let heading = event.alpha;
-      if (typeof event.webkitCompassHeading !== "undefined") heading = event.webkitCompassHeading;
-      if (heading != null) {
-        const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-        const index = Math.round(heading / 45) % 8;
-        compass.innerText = directions[index];
-        compass.style.transform = `rotate(${-heading}deg)`;
-      }
-    }
-
-    async function loadWeather() {
-      const res = await fetch("https://api.openweathermap.org/data/2.5/weather?lat=53.387&lon=-2.205&units=metric&appid=e583bd0c194bbfeb3deb92f6bfdad11a");
-      const data = await res.json();
-      const temp = Math.round(data.main.temp);
-      const windSpeed = Math.round(data.wind.speed * 2.237);
-      const windDir = data.wind.deg;
-      const icon = data.weather[0].icon;
-      const desc = data.weather[0].description;
-      const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-      const wind = directions[Math.round(windDir / 45) % 8];
-      document.getElementById("weatherBox").innerHTML = `
-        <img src="https://openweathermap.org/img/wn/${icon}@2x.png" alt="${desc}" />
-        <div>Cheadle GC</div>
-        <div>${temp}°C • ${desc}</div>
-        <div>Wind: ${windSpeed} mph ${wind}</div>
-      `;
-    }
-
-    loadWeather();
-  </script>
 </body>
 </html>
