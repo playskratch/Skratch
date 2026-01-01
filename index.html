@@ -2,525 +2,1325 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PlaySkratch</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ForeThought Web — Field Mode</title>
+
+  <!-- Icons / PWA-ish -->
   <link rel="icon" href="skratch.png" type="image/png">
   <link rel="apple-touch-icon" href="skratch.png" sizes="180x180">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="PlaySkratch">
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="apple-mobile-web-app-title" content="ForeThought Field">
+  <meta name="theme-color" content="#111111">
+
+  <!-- Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
-      --primary: #D72638;
-      --bg: #fdfdfd;
+      --primary: #111;
+      --accent: #0a84ff;
+      --danger: #d72638;
+      --bg: #f6f6f7;
       --card: #ffffff;
-      --input: #f1f1f1;
+      --input: #f1f1f2;
       --text: #111;
+      --muted: #666;
+      --border: #e5e5e7;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
       padding: 1rem;
     }
+
     h1 {
       color: var(--primary);
       text-align: center;
-      margin-bottom: 1rem;
+      margin: 0.25rem 0 0.25rem;
+      letter-spacing: -0.02em;
+      font-size: 1.55rem;
     }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding-bottom: 5rem; /* space for sticky bar */
+    }
+
     .section {
       background: var(--card);
       padding: 1rem;
       margin-bottom: 1rem;
-      border-radius: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
     }
+
+    details summary {
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+      list-style: none;
+    }
+    details summary::-webkit-details-marker { display: none; }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
     label {
-      font-weight: bold;
+      font-weight: 700;
       display: block;
-      margin: 1rem 0 0.3rem;
+      margin: 1rem 0 0.35rem;
+      font-size: 0.92rem;
     }
+
     input, select, textarea {
       width: 100%;
-      padding: 1rem;
+      padding: 0.9rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
       background: var(--input);
       color: var(--text);
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--primary);
       outline: none;
     }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(10,132,255,0.15);
+    }
+
+    textarea { resize: vertical; }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .row3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 740px) {
+      .row2, .row3 { grid-template-columns: 1fr; }
+    }
+
     button {
       display: block;
       width: 100%;
-      padding: 1rem;
+      padding: 0.95rem;
       font-size: 1rem;
-      background: var(--primary);
+      background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 12px;
       margin-top: 1rem;
       cursor: pointer;
+      font-weight: 800;
     }
-    details summary {
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
+
+    button.secondary {
+      background: #fff;
+      color: var(--primary);
+      border: 1px solid var(--border);
     }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    @media (max-width: 740px) {
+      .toolbar { grid-template-columns: 1fr; }
+    }
+
     .hole-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+      gap: 0.75rem;
+      margin-bottom: 0.9rem;
+      padding: 0.85rem;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
     }
+
+    .hole-row .hole-title {
+      grid-column: 1 / -1;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.25rem;
+    }
+
+    .hole-row .hole-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    @media (max-width: 740px) {
+      .hole-row .hole-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      padding: 0.85rem;
+      margin-top: 0.75rem;
+    }
+
+    .card strong { display:block; }
+
+    .mini-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.65rem;
+    }
+
+    .mini-actions button {
+      width: auto;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.9rem;
+      border-radius: 10px;
+      margin-top: 0;
+    }
+
+    .mini-actions button.secondary {
+      background:#fff;
+      border:1px solid var(--border);
+      color:var(--primary);
+    }
+
     .sticky-save {
       position: fixed;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: var(--card);
-      padding: 1rem;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      background: rgba(246,246,247,0.92);
+      backdrop-filter: blur(10px);
+      padding: 0.85rem 1rem;
+      border-top: 1px solid var(--border);
       z-index: 999;
     }
-    textarea.readonly {
-      background: var(--input);
-      color: var(--text);
-      font-size: 0.9rem;
+
+    .sticky-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 740px) {
+      .sticky-inner { grid-template-columns: 1fr; }
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-left: 0.4rem;
+      font-weight: 700;
+    }
+
+    .hint {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: #fafafa;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1rem 0;
+    }
+
+    .fileRow {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem;
+      align-items: end;
+    }
+
+    @media (max-width: 740px) {
+      .fileRow { grid-template-columns: 1fr; }
     }
   </style>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-  <h1>PlaySkratch v1.3.2</h1>
-  <div class="section">
-    <button onclick="exportCoachPDF()">Export PDF for Coach</button>
-</div>
-  <div class="section">
-    <details open>
-      <summary>Practice Log</summary>
-      <label>Date</label>
-      <input type="date" id="practiceDate" />
-      <label>Type</label>
-      <select id="practiceType">
-        <option>Full Swing</option>
-        <option>Short Game</option>
-        <option>Putting</option>
-        <option>Wedge Matrix</option>
-      </select>
-      <label>Clubs Used</label>
-      <input type="text" id="practiceClubs" placeholder="e.g., 7i, 56°, Driver" />
-      <label>Notes</label>
-      <textarea id="practiceNotes" rows="3"></textarea>
-      <button onclick="savePractice()">Log Practice</button>
-      <div id="practiceHistory" style="margin-top: 1rem;"></div>
-    </details>
+  <div class="wrap">
+    <h1>ForeThought Web — Field Mode <span class="pill">v1.0</span></h1>
+    <div class="subtitle">Fast capture + JSON exchange. Best on iPad & laptop.</div>
+
+    <!-- =========================
+         DATA EXCHANGE
+         ========================= -->
+    <div class="section">
+      <details open>
+        <summary>Data Exchange (JSON)</summary>
+
+        <div class="fileRow">
+          <div>
+            <label>Import JSON</label>
+            <input id="importFile" type="file" accept=".json,application/json" />
+            <div class="hint">
+              Canonical filenames:
+              <div class="mono">LessonLogger.json</div>
+              <div class="mono">YardageBook.json</div>
+              <div class="mono">ForeThought_Bundle.json</div>
+            </div>
+          </div>
+
+          <div>
+            <button class="secondary" onclick="openImportPicker()">📥 Pick File</button>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button onclick="exportLessonsJSON()">⬇️ Export LessonLogger.json</button>
+          <button onclick="exportYardageBookJSON()">⬇️ Export YardageBook.json</button>
+        </div>
+
+        <div class="toolbar">
+          <button class="secondary" onclick="exportBundleJSON()">⬇️ Export Bundle</button>
+          <button class="danger" onclick="wipeAll()">🧨 Wipe ALL Local Data</button>
+        </div>
+
+        <div id="importResult" class="hint" style="display:none;"></div>
+      </details>
+    </div>
+
+    <!-- =========================
+         COACH PDF
+         ========================= -->
+    <div class="section">
+      <details open>
+        <summary>Coach Export</summary>
+        <div class="muted">
+          Exports the latest round + last practice sessions + last rounds + handicap + handicap chart.
+        </div>
+        <button onclick="exportCoachPDF()">Export PDF for Coach</button>
+      </details>
+    </div>
+
+    <!-- =========================
+         LESSON LOGGER (Practice)
+         ========================= -->
+    <div class="section">
+      <details open>
+        <summary>Lesson Logger (Sessions)</summary>
+
+        <div class="row2">
+          <div>
+            <label>Date</label>
+            <input type="date" id="lessonDate" />
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="lessonType">
+              <option value="Full Swing">Full Swing</option>
+              <option value="Short Game">Short Game</option>
+              <option value="Putting">Putting</option>
+              <option value="Wedge Matrix">Wedge Matrix</option>
+              <option value="Lesson">Lesson</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Clubs Used</label>
+        <input type="text" id="lessonClubs" placeholder="e.g., 7i, 56°, Driver" />
+
+        <label>Notes</label>
+        <textarea id="lessonNotes" rows="3"></textarea>
+
+        <button onclick="saveLesson()">Log Session</button>
+
+        <div id="lessonHistory" style="margin-top: 1rem;"></div>
+      </details>
+    </div>
+
+    <!-- =========================
+         ROUND SETUP
+         ========================= -->
+    <div class="section">
+      <details>
+        <summary>Round Setup</summary>
+
+        <div class="row2">
+          <div>
+            <label>Date</label>
+            <input type="date" id="roundDate" />
+          </div>
+          <div>
+            <label>Holes Played</label>
+            <select id="holeCount" onchange="onHoleCountChange()">
+              <option value="">Select…</option>
+              <option value="9">9 Holes</option>
+              <option value="18">18 Holes</option>
+            </select>
+            <div class="muted" style="margin-top:.4rem;">
+              Holes appear after selection.
+            </div>
+          </div>
+        </div>
+
+        <label>Course</label>
+        <input type="text" id="roundCourse" placeholder="e.g., Cheadle Golf Club" />
+
+        <div class="row2">
+          <div>
+            <label>Tee</label>
+            <select id="roundTee">
+              <option>Yellow</option>
+              <option>White</option>
+              <option>Red</option>
+              <option>Blue</option>
+            </select>
+          </div>
+          <div>
+            <label>Ball</label>
+            <input type="text" id="roundBall" placeholder="e.g., Pro V1" />
+          </div>
+        </div>
+
+        <label>Bag</label>
+        <input type="text" id="roundBag" placeholder="e.g., Winter Set" />
+
+        <label>Weather / Notes</label>
+        <textarea id="roundWeather" rows="3"></textarea>
+      </details>
+    </div>
+
+    <!-- =========================
+         HOLE-BY-HOLE
+         ========================= -->
+    <div class="section">
+      <details>
+        <summary>Hole-by-Hole</summary>
+
+        <div class="toolbar">
+          <button class="secondary" onclick="fillCheadleParForRound()">Set Cheadle GC Default Par</button>
+          <button class="secondary" onclick="clearHoleInputs()">Clear Hole Inputs</button>
+        </div>
+
+        <div id="holesContainer" style="margin-top: 1rem;"></div>
+
+        <div class="hint">
+          Tip: choose <strong>9</strong> or <strong>18</strong> in Round Setup first — then holes appear here.
+        </div>
+      </details>
+    </div>
+
+    <!-- =========================
+         ROUND HISTORY
+         ========================= -->
+    <div class="section">
+      <details>
+        <summary>Round History</summary>
+        <div id="roundHistory" style="margin-top: 1rem;"></div>
+      </details>
+    </div>
+
+    <!-- =========================
+         HANDICAP LOG
+         ========================= -->
+    <div class="section">
+      <details>
+        <summary>Handicap Index Log</summary>
+
+        <div class="row2">
+          <div>
+            <label for="hcpDate">Date</label>
+            <input type="date" id="hcpDate" />
+          </div>
+          <div>
+            <label for="hcpIndex">Handicap Index</label>
+            <input type="number" id="hcpIndex" step="0.1" min="0" max="54" />
+          </div>
+        </div>
+
+        <button onclick="saveHandicap()">Log Handicap</button>
+        <div id="handicapHistory" style="margin-top: 1rem;"></div>
+      </details>
+    </div>
+
+    <!-- =========================
+         YARDAGE BOOK EDITOR
+         ========================= -->
+    <div class="section">
+      <details>
+        <summary>Course Editor</summary>
+
+        <div class="row2">
+          <div>
+            <label>Course</label>
+            <input id="ybCourse" type="text" placeholder="e.g., Cheadle Golf Club">
+          </div>
+          <div>
+            <label>Tee</label>
+            <input id="ybTee" type="text" placeholder="e.g., Yellow">
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button class="secondary" onclick="buildYardageInputs()">↻ Build / Reset 18 Holes</button>
+          <button class="secondary" onclick="fillCheadleDefaultsYB()">⚡ Fill Cheadle Defaults</button>
+        </div>
+
+        <div id="yardageContainer" style="margin-top: 1rem;"></div>
+
+        <button onclick="saveYardageBook()">Save YardageBook</button>
+
+        <div id="yardageStatus" class="hint" style="display:none;"></div>
+      </details>
+    </div>
+
   </div>
 
-  <div class="section">
-    <details>
-      <summary>Round Setup</summary>
-      <label>Date</label>
-      <input type="date" id="roundDate" />
-      <label>Course</label>
-      <input type="text" id="roundCourse" placeholder="e.g., Cheadle Golf Club" />
-      <label>Tee</label>
-      <select id="roundTee">
-        <option>Yellow</option>
-        <option>White</option>
-      </select>
-      <label>Ball</label>
-      <input type="text" id="roundBall" />
-      <label>Bag</label>
-      <input type="text" id="roundBag" />
-      <label>Weather / Notes</label>
-      <textarea id="roundWeather" rows="3"></textarea>
-    </details>
-  </div>
-
-  <div class="section">
-    <details>
-      <summary>Hole-by-Hole</summary>
-      <button onclick="fillCheadlePar()">Set Cheadle GC Default Par</button>
-      <div id="holesContainer"></div>
-    </details>
-  </div>
-
-  <div class="section">
-  <details>
-    <summary>Round History</summary>
-    <div id="roundHistory" style="margin-top: 1rem;"></div>
-  </details>
-</div>
-<div class="section">
-    <details>
-      <summary>Handicap Index Log</summary>
-      <label for="hcpDate">Date</label>
-      <input type="date" id="hcpDate" />
-      <label for="hcpIndex">Handicap Index</label>
-      <input type="number" id="hcpIndex" step="0.1" min="0" max="54" />
-      <button onclick="saveHandicap()">Log Handicap</button>
-      <div id="handicapHistory" style="margin-top: 1rem;"></div>
-    </details>
-  </div>
+  <!-- Sticky Save Bar -->
   <div class="sticky-save">
-    <button onclick="logRound()">Save Round</button>
+    <div class="sticky-inner">
+      <button onclick="logRound()">Save Round</button>
+      <button class="secondary" onclick="exportBundleJSON()">⬇️ Export Bundle</button>
+    </div>
   </div>
 
-  <script>
-    function savePractice() {
-      const data = {
-        date: document.getElementById('practiceDate').value,
-        type: document.getElementById('practiceType').value,
-        clubs: document.getElementById('practiceClubs').value,
-        notes: document.getElementById('practiceNotes').value
-      };
-      if (!data.date || !data.type || !data.clubs) {
-        alert('Please fill in all required fields.');
-        return;
-      }
-      const sessions = JSON.parse(localStorage.getItem('practice') || '[]');
-      sessions.push(data);
-      localStorage.setItem('practice', JSON.stringify(sessions));
-      alert('Practice logged!');
-      showPracticeSessions();
-    }
+<script>
+  /* ============================================================
+     ForeThought Web — Field Mode
+     - Sessions (Lesson Logger)
+     - Rounds + 9/18 hole-by-hole
+     - Handicap log
+     - YardageBook editor
+     - JSON Import/Export:
+       LessonLogger.json
+       YardageBook.json
+       ForeThought_Bundle.json
+     - Coach PDF export
+     ============================================================ */
 
-    function showPracticeSessions() {
-      const container = document.getElementById('practiceHistory');
-      container.innerHTML = '';
-      const sessions = JSON.parse(localStorage.getItem('practice') || '[]').reverse();
-      if (sessions.length === 0) {
-        container.innerHTML = '<p>No sessions yet.</p>';
-        return;
-      }
-      sessions.forEach(s => {
-        const div = document.createElement('div');
-        div.innerHTML = `<strong>${s.date}</strong> – ${s.type}<br>Clubs: ${s.clubs}<br>Notes: ${s.notes || '-'}<hr>`;
+  // ---------------------------
+  // Storage keys
+  // ---------------------------
+  const KEY_LESSONS  = "lessons";      // session entries
+  const KEY_ROUNDS   = "rounds";       // round entries
+  const KEY_HCP      = "handicap";     // handicap entries
+  const KEY_YB       = "yardageBook";  // single yardage book (canonical)
 
-
-    container.appendChild(div);
-      });
-    }
-
-    function logRound() {
-      const round = {
-        date: document.getElementById('roundDate').value,
-        course: document.getElementById('roundCourse').value,
-        tee: document.getElementById('roundTee').value,
-        ball: document.getElementById('roundBall').value,
-        bag: document.getElementById('roundBag').value,
-        weather: document.getElementById('roundWeather').value,
-        holes: [],
-        par: []
-      };
-      for (let i = 1; i <= 18; i++) {
-        const h = {
-          score: document.getElementById(`score${i}`).value,
-          fir: document.getElementById(`fir${i}`).value,
-          gir: document.getElementById(`gir${i}`).value,
-          putts: document.getElementById(`putts${i}`).value
-        };
-        round.holes.push(h);
-        round.par.push(parseInt(document.getElementById(`par${i}`).value) || 4);
-      }
-      const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
-      rounds.push(round);
-      localStorage.setItem('rounds', JSON.stringify(rounds));
-      alert('Round saved!');
-    }
-
-    function buildHoleInputs() {
-  const container = document.getElementById('holesContainer');
-  for (let i = 1; i <= 18; i++) {
-    const div = document.createElement('div');
-    div.className = 'hole-row';
-    div.innerHTML = `
-      <label>Hole ${i}</label>
-      <input type="number" id="score${i}" placeholder="Score" min="1" max="12" />
-      <input type="number" id="par${i}" placeholder="Par" min="3" max="6" />
-      <select id="fir${i}">
-        <option>FIR</option><option>✔</option><option>Left</option><option>Right</option><option>N/A</option>
-      </select>
-      <select id="gir${i}">
-        <option>GIR</option><option>✔</option><option>Short</option><option>Long</option><option>Left</option><option>Right</option>
-      </select>
-      <input type="number" id="putts${i}" placeholder="Putts" min="0" max="5" />
-    `;
-    container.appendChild(div);
+  // ---------------------------
+  // Helpers
+  // ---------------------------
+  function safeParse(str, fallback) {
+    try { return JSON.parse(str); } catch { return fallback; }
   }
-}
 
-async function exportCoachPDF() {
-  const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
-  const practice = JSON.parse(localStorage.getItem('practice') || '[]');
-  if (rounds.length === 0) return alert('No rounds logged.');
+  function downloadJSON(filename, obj) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 
-  const doc = new jspdf.jsPDF();
-  const latest = rounds[rounds.length - 1];
-  const latestPar = latest.par || [4,4,3,5,4,4,3,4,5,4,5,3,4,4,4,3,5,4];
+  function openImportPicker() {
+    document.getElementById("importFile").click();
+  }
 
-  doc.setFontSize(14);
-  doc.text(`PlaySkratch Coach Report`, 10, 10);
-  doc.setFontSize(10);
-  doc.text(`Date: ${latest.date}`, 10, 20);
-  doc.text(`Course: ${latest.course}`, 10, 26);
-  doc.text(`Tee: ${latest.tee} | Ball: ${latest.ball}`, 10, 32);
+  function todayISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
+  function escapeHTML(s) {
+    if (s == null) return "";
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
-  doc.text(`Bag: ${latest.bag}`, 10, 44);
-  doc.text(`Weather: ${latest.weather}`, 10, 50);
+  // ---------------------------
+  // Canonical JSON schemas
+  // ---------------------------
+  function lessonsExportPayload() {
+    const lessons = safeParse(localStorage.getItem(KEY_LESSONS) || "[]", []);
+    return {
+      kind: "forethought.lessons",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      lessons
+    };
+  }
 
-  let y = 60;
-  doc.text('Hole  Score  FIR  GIR  Putts', 10, y);
-  y += 6;
+  function yardageBookPayload() {
+    const yb = safeParse(localStorage.getItem(KEY_YB) || "null", null);
+    return yb || {
+      kind: "forethought.yardageBook",
+      version: 1,
+      course: "",
+      tee: "",
+      holes: Array.from({ length: 18 }, (_, i) => ({ hole: i + 1, par: 4, yardage: null, notes: "" }))
+    };
+  }
 
-  let totalScore = 0;
-  let frontScore = 0;
-  let backScore = 0;
-  let parTotal = 0;
-  let parFront = 0;
-  let parBack = 0;
+  function bundlePayload() {
+    const lessons = safeParse(localStorage.getItem(KEY_LESSONS) || "[]", []);
+    const rounds  = safeParse(localStorage.getItem(KEY_ROUNDS) || "[]", []);
+    const hcp     = safeParse(localStorage.getItem(KEY_HCP) || "[]", []);
+    const yb      = safeParse(localStorage.getItem(KEY_YB) || "null", null);
 
-  latest.holes.forEach((h, i) => {
-    const score = parseInt(h.score) || 0;
-    const p = latestPar[i];
-    totalScore += score;
-    parTotal += p;
-    if (i < 9) {
-      frontScore += score;
-      parFront += p;
-    } else {
-      backScore += score;
-      parBack += p;
+    return {
+      kind: "forethought.bundle",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      lessons,
+      rounds,
+      handicap: hcp,
+      yardageBook: yb
+    };
+  }
+
+  // ---------------------------
+  // Export buttons
+  // ---------------------------
+  function exportLessonsJSON() {
+    downloadJSON("LessonLogger.json", lessonsExportPayload());
+  }
+
+  function exportYardageBookJSON() {
+    downloadJSON("YardageBook.json", yardageBookPayload());
+  }
+
+  function exportBundleJSON() {
+    downloadJSON("ForeThought_Bundle.json", bundlePayload());
+  }
+
+  // ---------------------------
+  // Import JSON
+  // ---------------------------
+  document.getElementById("importFile").addEventListener("change", async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const filename = (file.name || "").toLowerCase();
+    const text = await file.text();
+    const json = safeParse(text, null);
+
+    const resultBox = document.getElementById("importResult");
+    resultBox.style.display = "block";
+
+    if (!json) {
+      resultBox.innerHTML = "<strong>❌ Import failed</strong><div class='muted'>Could not parse JSON.</div>";
+      e.target.value = "";
+      return;
     }
 
-    const line = `${i + 1}`.padEnd(5) + `${h.score}`.padEnd(7) + `${h.fir}`.padEnd(6) + `${h.gir}`.padEnd(6) + `${h.putts}`;
-    doc.text(line, 10, y);
-    y += 6;
-    if (y > 270) { doc.addPage(); y = 10; }
+    // Filename hint override (helps older files)
+    if (filename === "lessonlogger.json") json.kind = json.kind || "forethought.lessons";
+    if (filename === "yardagebook.json") json.kind = json.kind || "forethought.yardageBook";
+
+    const kind = json.kind || json.type || "";
+
+    try {
+      // Lessons
+      if (kind === "forethought.lessons") {
+        const incoming = Array.isArray(json.lessons) ? json.lessons : [];
+        const existing = safeParse(localStorage.getItem(KEY_LESSONS) || "[]", []);
+        const merged = existing.concat(incoming);
+        localStorage.setItem(KEY_LESSONS, JSON.stringify(merged));
+        showLessons();
+        resultBox.innerHTML = `<strong>✅ Imported LessonLogger</strong><div class='muted'>Added ${incoming.length} lessons/sessions.</div>`;
+      }
+
+      // YardageBook
+      else if (kind === "forethought.yardageBook") {
+        // store as canonical single yardage book
+        localStorage.setItem(KEY_YB, JSON.stringify(json));
+        loadYardageBookIntoEditor();
+        resultBox.innerHTML = `<strong>✅ Imported YardageBook</strong><div class='muted'>${escapeHTML(json.course || "Unknown course")} • ${escapeHTML(json.tee || "Tee")}</div>`;
+      }
+
+      // Bundle
+      else if (kind === "forethought.bundle") {
+        if (Array.isArray(json.lessons)) {
+          const existing = safeParse(localStorage.getItem(KEY_LESSONS) || "[]", []);
+          localStorage.setItem(KEY_LESSONS, JSON.stringify(existing.concat(json.lessons)));
+        }
+        if (Array.isArray(json.rounds)) {
+          const existing = safeParse(localStorage.getItem(KEY_ROUNDS) || "[]", []);
+          localStorage.setItem(KEY_ROUNDS, JSON.stringify(existing.concat(json.rounds)));
+        }
+        if (Array.isArray(json.handicap)) {
+          const existing = safeParse(localStorage.getItem(KEY_HCP) || "[]", []);
+          localStorage.setItem(KEY_HCP, JSON.stringify(existing.concat(json.handicap)));
+        }
+        if (json.yardageBook) {
+          localStorage.setItem(KEY_YB, JSON.stringify(json.yardageBook));
+        }
+
+        showLessons();
+        showRoundHistory();
+        showHandicapHistory();
+        loadYardageBookIntoEditor();
+
+        resultBox.innerHTML = `<strong>✅ Imported Bundle</strong><div class='muted'>Lessons, rounds, handicap, and yardage book merged.</div>`;
+      }
+
+      // Legacy fallback (your old practice objects)
+      else if (json.date && (json.type || json.clubs) && (json.notes !== undefined)) {
+        const existing = safeParse(localStorage.getItem(KEY_LESSONS) || "[]", []);
+        existing.push({
+          date: json.date,
+          type: json.type || "Session",
+          clubs: json.clubs || "",
+          notes: json.notes || ""
+        });
+        localStorage.setItem(KEY_LESSONS, JSON.stringify(existing));
+        showLessons();
+        resultBox.innerHTML = `<strong>✅ Imported legacy session</strong><div class='muted'>Mapped into LessonLogger store.</div>`;
+      }
+
+      else {
+        resultBox.innerHTML = `<strong>❌ Unknown JSON</strong><div class='muted'>Not LessonLogger, YardageBook, or Bundle.</div>`;
+      }
+    } catch (err) {
+      resultBox.innerHTML = `<strong>❌ Import error</strong><div class='muted'>${escapeHTML(err?.message || String(err))}</div>`;
+    }
+
+    e.target.value = "";
   });
 
-  y += 4;
-  doc.setFontSize(11);
+  // ---------------------------
+  // Lessons (sessions)
+  // ---------------------------
+  function saveLesson() {
+    const data = {
+      date: document.getElementById('lessonDate').value,
+      type: document.getElementById('lessonType').value,
+      clubs: document.getElementById('lessonClubs').value,
+      notes: document.getElementById('lessonNotes').value
+    };
 
-  const diffFront = frontScore - parFront;
-  const diffBack = backScore - parBack;
-  const diffTotal = totalScore - parTotal;
-  doc.text(`Front 9 Total: ${frontScore} (Par ${parFront}) | ${diffFront === 0 ? 'E' : (diffFront > 0 ? '+' + diffFront : diffFront)}`, 10, y);
-  y += 6;
-  doc.text(`Back 9 Total: ${backScore} (Par ${parBack}) | ${diffBack === 0 ? 'E' : (diffBack > 0 ? '+' + diffBack : diffBack)}`, 10, y);
-  y += 6;
-  doc.text(`Overall Total Score: ${totalScore} (Par ${parTotal}) | ${diffTotal === 0 ? 'E' : (diffTotal > 0 ? '+' + diffTotal : diffTotal)}`, 10, y);
-  y += 10;
+    if (!data.date || !data.type || !data.clubs) {
+      alert('Please fill in Date, Type, and Clubs Used.');
+      return;
+    }
 
-  doc.setFontSize(12);
-  doc.text('Last 5 Practice Sessions', 10, y);
-  y += 6;
+    const sessions = safeParse(localStorage.getItem(KEY_LESSONS) || '[]', []);
+    sessions.push(data);
+    localStorage.setItem(KEY_LESSONS, JSON.stringify(sessions));
+    alert('Session logged!');
+    showLessons();
+  }
 
-  const recentPractice = practice.reverse().slice(0, 5);
-  doc.setFontSize(10);
-  if (recentPractice.length === 0) {
-    doc.text('No practice sessions logged.', 10, y);
-  } else {
-    recentPractice.forEach((p) => {
-      const text = `${p.date} – ${p.type} | Clubs: ${p.clubs} | Notes: ${p.notes || '-'}`;
-      const lines = doc.splitTextToSize(text, 180);
-      doc.text(lines, 10, y);
-      y += lines.length * 6;
-      if (y > 270) { doc.addPage(); y = 10; }
+  function showLessons() {
+    const container = document.getElementById('lessonHistory');
+    container.innerHTML = '';
+    const sessions = safeParse(localStorage.getItem(KEY_LESSONS) || '[]', []).slice().reverse();
+
+    if (sessions.length === 0) {
+      container.innerHTML = '<p class="muted">No sessions yet.</p>';
+      return;
+    }
+
+    sessions.forEach((s, idx) => {
+      const div = document.createElement('div');
+      div.className = "card";
+      div.innerHTML = `
+        <strong>${escapeHTML(s.date)} <span class="pill">${escapeHTML(s.type)}</span></strong>
+        <div class="muted">Clubs: ${escapeHTML(s.clubs || '—')}</div>
+        <div style="margin-top:.5rem; white-space:pre-wrap">${escapeHTML(s.notes || '—')}</div>
+        <div class="mini-actions">
+          <button class="secondary" onclick="deleteLesson(${idx})">🗑️ Delete</button>
+        </div>
+      `;
+      container.appendChild(div);
     });
   }
 
-  y += 10;
-  doc.setFontSize(12);
-  doc.text('Last 5 Rounds', 10, y);
-  y += 6;
+  function deleteLesson(reverseIndex) {
+    const sessions = safeParse(localStorage.getItem(KEY_LESSONS) || '[]', []);
+    const idx = sessions.length - 1 - reverseIndex;
+    if (!confirm(`Delete session from ${sessions[idx]?.date}?`)) return;
+    sessions.splice(idx, 1);
+    localStorage.setItem(KEY_LESSONS, JSON.stringify(sessions));
+    showLessons();
+  }
 
-  const recentRounds = rounds
-    .map(r => {
+  // ---------------------------
+  // Rounds + Hole-by-hole (9 or 18)
+  // ---------------------------
+  function onHoleCountChange() {
+    const count = parseInt(document.getElementById("holeCount").value);
+    const container = document.getElementById("holesContainer");
+    container.innerHTML = "";
+
+    if (!count) return;
+
+    for (let i = 1; i <= count; i++) {
+      const div = document.createElement("div");
+      div.className = "hole-row";
+      div.innerHTML = `
+        <div class="hole-title">Hole ${i}</div>
+        <div class="hole-grid">
+          <input type="number" id="score${i}" placeholder="Score" min="1" max="12" />
+          <input type="number" id="par${i}" placeholder="Par" min="3" max="6" />
+          <input type="number" id="putts${i}" placeholder="Putts" min="0" max="5" />
+
+          <select id="fir${i}">
+            <option value="">FIR</option>
+            <option>✔</option>
+            <option>Left</option>
+            <option>Right</option>
+            <option>N/A</option>
+          </select>
+
+          <select id="gir${i}">
+            <option value="">GIR</option>
+            <option>✔</option>
+            <option>Short</option>
+            <option>Long</option>
+            <option>Left</option>
+            <option>Right</option>
+          </select>
+
+          <select id="ud${i}">
+            <option value="">Up & Down</option>
+            <option>✔</option>
+            <option>✖</option>
+            <option>N/A</option>
+          </select>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+  }
+
+  function clearHoleInputs() {
+    const count = parseInt(document.getElementById("holeCount").value);
+    if (!count) return;
+
+    for (let i = 1; i <= count; i++) {
+      ["score","par","putts","fir","gir","ud"].forEach(k => {
+        const el = document.getElementById(`${k}${i}`);
+        if (!el) return;
+        if (el.tagName === "SELECT") el.value = "";
+        else el.value = "";
+      });
+    }
+  }
+
+  function fillCheadleParForRound() {
+    const cheadlePar = [4,3,4,4,3,4,3,4,3,4,3,4,4,3,4,3,4,3];
+    const count = parseInt(document.getElementById("holeCount").value);
+
+    if (!count) {
+      alert("Select 9 or 18 holes first.");
+      return;
+    }
+
+    for (let i = 1; i <= count; i++) {
+      const input = document.getElementById(`par${i}`);
+      if (input) input.value = cheadlePar[i - 1];
+    }
+  }
+
+  function logRound() {
+    const holeCount = parseInt(document.getElementById("holeCount").value);
+
+    if (!holeCount) {
+      alert("Please select 9 or 18 holes in Round Setup.");
+      return;
+    }
+
+    const round = {
+      date: document.getElementById('roundDate').value,
+      course: document.getElementById('roundCourse').value,
+      tee: document.getElementById('roundTee').value,
+      ball: document.getElementById('roundBall').value,
+      bag: document.getElementById('roundBag').value,
+      weather: document.getElementById('roundWeather').value,
+      holeCount,
+      holes: []
+    };
+
+    for (let i = 1; i <= holeCount; i++) {
+      round.holes.push({
+        hole: i,
+        score: parseInt(document.getElementById(`score${i}`)?.value) || null,
+        par: parseInt(document.getElementById(`par${i}`)?.value) || null,
+        fir: document.getElementById(`fir${i}`)?.value || null,
+        gir: document.getElementById(`gir${i}`)?.value || null,
+        putts: parseInt(document.getElementById(`putts${i}`)?.value) || null,
+        upDown: document.getElementById(`ud${i}`)?.value || null
+      });
+    }
+
+    const rounds = safeParse(localStorage.getItem(KEY_ROUNDS) || '[]', []);
+    rounds.push(round);
+    localStorage.setItem(KEY_ROUNDS, JSON.stringify(rounds));
+    alert(`Round saved (${holeCount} holes)!`);
+
+    showRoundHistory();
+  }
+
+  function showRoundHistory() {
+    const container = document.getElementById('roundHistory');
+    container.innerHTML = '';
+    const rounds = safeParse(localStorage.getItem(KEY_ROUNDS) || '[]', []).slice().reverse();
+
+    if (rounds.length === 0) {
+      container.innerHTML = '<p class="muted">No rounds logged yet.</p>';
+      return;
+    }
+
+    rounds.forEach((r, reverseIndex) => {
       let total = 0;
-      r.holes.forEach((h, i) => {
-        total += parseInt(h.score) || 0;
-      });
-      return { ...r, total };
-    })
-    .sort((a, b) => a.total - b.total)
-    .slice(0, 5);
-  doc.setFontSize(10);
-  if (recentRounds.length === 0) {
-    doc.text('No rounds available.', 10, y);
-  } else {
-    recentRounds.forEach((r) => {
-      let total = 0, front = 0, back = 0;
-      r.holes.forEach((h, i) => {
-        const s = parseInt(h.score) || 0;
+      let parSum = 0;
+
+      (r.holes || []).forEach(h => {
+        const s = Number(h.score) || 0;
+        const p = Number(h.par) || 0;
         total += s;
-        if (i < 9) front += s;
-        else back += s;
+        parSum += p;
       });
-      const pSum = r.par ? r.par.reduce((a, b) => a + b, 0) : 72;
-      const diff = total - pSum;
-      const diffText = diff === 0 ? 'E' : (diff > 0 ? `+${diff}` : diff);
-      const summary = `${r.date} – ${r.course || 'Unknown Course'} | Tee: ${r.tee || '-'} | Ball: ${r.ball || '-'} | Front 9: ${front} | Back 9: ${back} | Total: ${total} (${diffText})`;
+
+      const diff = total - parSum;
+      const diffText = diff === 0 ? "E" : (diff > 0 ? `+${diff}` : `${diff}`);
+
+      const div = document.createElement('div');
+      div.className = "card";
+      div.innerHTML = `
+        <strong>${escapeHTML(r.date || "Unknown date")} — ${escapeHTML(r.course || "Unknown course")}
+          <span class="pill">${escapeHTML(String(r.holeCount || 18))} holes</span>
+        </strong>
+        <div class="muted">Tee: ${escapeHTML(r.tee || "-")} • Ball: ${escapeHTML(r.ball || "-")} • Bag: ${escapeHTML(r.bag || "-")}</div>
+        <div style="margin-top:.35rem;">Total: <strong>${total}</strong> (Par ${parSum}) • ${diffText}</div>
+        <div class="mini-actions">
+          <button class="danger" onclick="deleteRound(${reverseIndex})">🗑️ Delete</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function deleteRound(reverseIndex) {
+    const rounds = safeParse(localStorage.getItem(KEY_ROUNDS) || '[]', []);
+    const idx = rounds.length - 1 - reverseIndex;
+    if (!rounds[idx]) return;
+
+    if (!confirm(`Delete round from ${rounds[idx].date}?`)) return;
+    rounds.splice(idx, 1);
+    localStorage.setItem(KEY_ROUNDS, JSON.stringify(rounds));
+    showRoundHistory();
+  }
+
+  // ---------------------------
+  // Handicap
+  // ---------------------------
+  function saveHandicap() {
+    const date = document.getElementById('hcpDate').value;
+    const index = parseFloat(document.getElementById('hcpIndex').value);
+
+    if (!date || isNaN(index)) {
+      alert('Please enter both date and handicap index.');
+      return;
+    }
+
+    const hcpLog = safeParse(localStorage.getItem(KEY_HCP) || '[]', []);
+    hcpLog.push({ date, index });
+    localStorage.setItem(KEY_HCP, JSON.stringify(hcpLog));
+    alert('Handicap logged!');
+    showHandicapHistory();
+  }
+
+  function showHandicapHistory() {
+    const container = document.getElementById('handicapHistory');
+    container.innerHTML = '';
+    const log = safeParse(localStorage.getItem(KEY_HCP) || '[]', []).slice().reverse();
+
+    if (log.length === 0) {
+      container.innerHTML = '<p class="muted">No handicap entries yet.</p>';
+      return;
+    }
+
+    log.forEach((entry, reverseIndex) => {
+      const div = document.createElement('div');
+      div.className = "card";
+      div.innerHTML = `
+        <strong>${escapeHTML(entry.date)} — Index: ${Number(entry.index).toFixed(1)}</strong>
+        <div class="mini-actions">
+          <button class="danger" onclick="deleteHandicap(${reverseIndex})">🗑️ Delete</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function deleteHandicap(reverseIndex) {
+    const log = safeParse(localStorage.getItem(KEY_HCP) || '[]', []);
+    const idx = log.length - 1 - reverseIndex;
+    if (!log[idx]) return;
+    if (!confirm(`Delete handicap entry ${log[idx].date}?`)) return;
+    log.splice(idx, 1);
+    localStorage.setItem(KEY_HCP, JSON.stringify(log));
+    showHandicapHistory();
+  }
+
+  // ---------------------------
+  // YardageBook editor (single canonical book)
+  // ---------------------------
+  function buildYardageInputs(existing = null) {
+    const container = document.getElementById("yardageContainer");
+    container.innerHTML = "";
+
+    const holes = existing?.holes && Array.isArray(existing.holes)
+      ? existing.holes
+      : Array.from({ length: 18 }, (_, i) => ({ hole: i + 1, par: 4, yardage: "", notes: "" }));
+
+    holes.forEach(h => {
+      const div = document.createElement("div");
+      div.className = "hole-row";
+      div.innerHTML = `
+        <div class="hole-title">Hole ${h.hole}</div>
+        <div class="hole-grid">
+          <input type="number" id="yb_par_${h.hole}" placeholder="Par" min="3" max="6" value="${h.par ?? 4}" />
+          <input type="number" id="yb_yard_${h.hole}" placeholder="Yardage" min="1" max="800" value="${h.yardage ?? ""}" />
+          <input type="text" id="yb_notes_${h.hole}" placeholder="Notes" value="${escapeHTML(h.notes || "")}" />
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function saveYardageBook() {
+    const course = document.getElementById("ybCourse").value.trim();
+    const tee = document.getElementById("ybTee").value.trim();
+
+    if (!course) {
+      alert("Course is required for YardageBook.");
+      return;
+    }
+
+    const holes = [];
+    for (let i = 1; i <= 18; i++) {
+      const par = parseInt(document.getElementById(`yb_par_${i}`)?.value) || 4;
+      const yardVal = document.getElementById(`yb_yard_${i}`)?.value;
+      const yardage = (yardVal === "" || yardVal == null) ? null : parseInt(yardVal);
+      const notes = document.getElementById(`yb_notes_${i}`)?.value || "";
+      holes.push({ hole: i, par, yardage, notes });
+    }
+
+    const yb = {
+      kind: "forethought.yardageBook",
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      course,
+      tee,
+      holes
+    };
+
+    localStorage.setItem(KEY_YB, JSON.stringify(yb));
+    const box = document.getElementById("yardageStatus");
+    box.style.display = "block";
+    box.innerHTML = `<strong>✅ Saved YardageBook</strong><div class="muted">${escapeHTML(course)} • ${escapeHTML(tee || "Tee")}</div>`;
+  }
+
+  function loadYardageBookIntoEditor() {
+    const yb = safeParse(localStorage.getItem(KEY_YB) || "null", null);
+    if (!yb) {
+      buildYardageInputs();
+      return;
+    }
+    document.getElementById("ybCourse").value = yb.course || "";
+    document.getElementById("ybTee").value = yb.tee || "";
+    buildYardageInputs(yb);
+  }
+
+  function fillCheadleDefaultsYB() {
+    document.getElementById("ybCourse").value = "Cheadle Golf Club";
+    document.getElementById("ybTee").value = "Yellow";
+    const par = [4,3,4,4,3,4,3,4,3,4,3,4,4,3,4,3,4,3];
+    const holes = par.map((p, i) => ({ hole: i + 1, par: p, yardage: "", notes: "" }));
+    buildYardageInputs({ holes });
+  }
+
+  // ---------------------------
+  // Wipe all
+  // ---------------------------
+  function wipeAll() {
+    if (!confirm("Wipe ALL local data (lessons, rounds, handicap, yardage book)?")) return;
+    localStorage.removeItem(KEY_LESSONS);
+    localStorage.removeItem(KEY_ROUNDS);
+    localStorage.removeItem(KEY_HCP);
+    localStorage.removeItem(KEY_YB);
+    showLessons();
+    showRoundHistory();
+    showHandicapHistory();
+    loadYardageBookIntoEditor();
+
+    const resultBox = document.getElementById("importResult");
+    resultBox.style.display = "block";
+    resultBox.innerHTML = "<strong>✅ Wiped</strong><div class='muted'>Local storage cleared.</div>";
+  }
+
+  // ---------------------------
+  // Coach PDF export (jsPDF + Chart.js image)
+  // ---------------------------
+  async function exportCoachPDF() {
+    const rounds = safeParse(localStorage.getItem(KEY_ROUNDS) || '[]', []);
+    const lessons = safeParse(localStorage.getItem(KEY_LESSONS) || '[]', []);
+    const hcpLog = safeParse(localStorage.getItem(KEY_HCP) || '[]', []);
+
+    if (rounds.length === 0) {
+      alert("No rounds logged.");
+      return;
+    }
+
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF();
+
+    const latest = rounds[rounds.length - 1];
+    const holes = latest.holes || [];
+    const holeCount = latest.holeCount || (holes.length || 18);
+
+    doc.setFontSize(14);
+    doc.text("ForeThought Coach Report", 10, 12);
+    doc.setFontSize(10);
+
+    doc.text(`Date: ${latest.date || "-"}`, 10, 22);
+    doc.text(`Course: ${latest.course || "-"}`, 10, 28);
+    doc.text(`Holes: ${holeCount}`, 10, 34);
+    doc.text(`Tee: ${latest.tee || "-"} | Ball: ${latest.ball || "-"}`, 10, 40);
+    doc.text(`Bag: ${latest.bag || "-"}`, 10, 46);
+    doc.text(`Weather/Notes: ${latest.weather || "-"}`, 10, 52);
+
+    let y = 62;
+    doc.setFontSize(10);
+    doc.text("Hole  Score  Par  FIR  GIR  Putts  U&D", 10, y);
+    y += 6;
+
+    let totalScore = 0;
+    let totalPar = 0;
+
+    let frontScore = 0, backScore = 0;
+    let frontPar = 0, backPar = 0;
+
+    holes.forEach((h, i) => {
+      const holeNo = (h.hole || (i+1));
+      const score = Number(h.score) || 0;
+      const par = Number(h.par) || 0;
+
+      totalScore += score;
+      totalPar += par;
+
+      if (holeCount === 18) {
+        if (i < 9) { frontScore += score; frontPar += par; }
+        else { backScore += score; backPar += par; }
+      }
+
+      const fir = h.fir || "-";
+      const gir = h.gir || "-";
+      const putts = (h.putts == null ? "-" : String(h.putts));
+      const ud = h.upDown || "-";
+
+      const line = `${String(holeNo).padEnd(5)}${String(score || "-").padEnd(7)}${String(par || "-").padEnd(6)}${String(fir).padEnd(6)}${String(gir).padEnd(6)}${String(putts).padEnd(7)}${String(ud)}`;
+      doc.text(line, 10, y);
+      y += 6;
+
+      if (y > 270) { doc.addPage(); y = 12; }
+    });
+
+    y += 4;
+    doc.setFontSize(11);
+
+    const diffTotal = totalScore - totalPar;
+    const diffText = diffTotal === 0 ? "E" : (diffTotal > 0 ? `+${diffTotal}` : `${diffTotal}`);
+
+    if (holeCount === 18) {
+      const df = frontScore - frontPar;
+      const db = backScore - backPar;
+      const frontText = df === 0 ? "E" : (df > 0 ? `+${df}` : `${df}`);
+      const backText  = db === 0 ? "E" : (db > 0 ? `+${db}` : `${db}`);
+
+      doc.text(`Front 9: ${frontScore} (Par ${frontPar}) | ${frontText}`, 10, y); y += 6;
+      doc.text(`Back 9:  ${backScore} (Par ${backPar}) | ${backText}`, 10, y); y += 6;
+      doc.text(`Total:   ${totalScore} (Par ${totalPar}) | ${diffText}`, 10, y); y += 10;
+    } else {
+      doc.text(`9-Hole Total: ${totalScore} (Par ${totalPar}) | ${diffText}`, 10, y);
+      y += 10;
+    }
+
+    // Last 5 sessions
+    doc.setFontSize(12);
+    doc.text("Last 5 Sessions", 10, y); y += 6;
+    doc.setFontSize(10);
+
+    const recentLessons = lessons.slice().reverse().slice(0, 5);
+    if (recentLessons.length === 0) {
+      doc.text("No sessions logged.", 10, y); y += 6;
+    } else {
+      recentLessons.forEach(s => {
+        const text = `${s.date} – ${s.type} | Clubs: ${s.clubs} | Notes: ${s.notes || "-"}`;
+        const lines = doc.splitTextToSize(text, 180);
+        doc.text(lines, 10, y);
+        y += lines.length * 6;
+        if (y > 270) { doc.addPage(); y = 12; }
+      });
+    }
+
+    y += 6;
+    doc.setFontSize(12);
+    doc.text("Last 5 Rounds (Best Totals)", 10, y); y += 6;
+    doc.setFontSize(10);
+
+    const recentRounds = rounds
+      .map(r => {
+        const t = (r.holes || []).reduce((acc, h) => acc + (Number(h.score) || 0), 0);
+        const p = (r.holes || []).reduce((acc, h) => acc + (Number(h.par) || 0), 0);
+        return { ...r, total: t, parTotal: p };
+      })
+      .sort((a,b) => a.total - b.total)
+      .slice(0,5);
+
+    recentRounds.forEach(r => {
+      const diff = (r.total || 0) - (r.parTotal || 0);
+      const dt = diff === 0 ? "E" : (diff > 0 ? `+${diff}` : `${diff}`);
+      const summary = `${r.date || "-"} — ${r.course || "Course"} | ${r.holeCount || (r.holes?.length||18)} holes | Total: ${r.total} (${dt})`;
       const lines = doc.splitTextToSize(summary, 180);
       doc.text(lines, 10, y);
       y += lines.length * 6;
-      if (y > 270) { doc.addPage(); y = 10; }
+      if (y > 270) { doc.addPage(); y = 12; }
     });
-  }
 
-  y += 10;
-  doc.setFontSize(12);
-  doc.text('Last 5 Handicap Index Entries', 10, y);
-  y += 6;
-
-  const hcp = JSON.parse(localStorage.getItem('handicap') || '[]').reverse().slice(0, 5);
-  doc.setFontSize(10);
-  if (hcp.length === 0) {
-    doc.text('No handicap entries.', 10, y);
-  } else {
-    hcp.forEach(h => {
-      doc.text(`${h.date} – Index: ${h.index.toFixed(1)}`, 10, y);
-      y += 6;
-      if (y > 270) { doc.addPage(); y = 10; }
-    });
-  }
-
-  const hcpLog = JSON.parse(localStorage.getItem('handicap') || '[]').reverse();
-  const last10 = hcpLog.slice(0, 10);
-  if (last10.length >= 2) {
-    const chartCanvas = document.createElement('canvas');
-    chartCanvas.width = 300;
-    chartCanvas.height = 150;
-    document.body.appendChild(chartCanvas);
-    const ctx = chartCanvas.getContext('2d');
-    const labels = last10.map(h => h.date);
-    const data = last10.map(h => h.index);
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Handicap Index',
-          data,
-          borderColor: '#D72638',
-          backgroundColor: 'rgba(215,38,56,0.1)',
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { beginAtZero: false }
-        }
-      }
-    });
-    await new Promise(res => setTimeout(res, 500));
-    const chartImg = chartCanvas.toDataURL('image/png');
-    doc.addPage();
+    y += 6;
     doc.setFontSize(12);
-    doc.text('Handicap Index Graph', 10, 10);
-    doc.addImage(chartImg, 'PNG', 10, 20, 180, 90);
-    document.body.removeChild(chartCanvas);
-  }
+    doc.text("Last 5 Handicap Entries", 10, y); y += 6;
+    doc.setFontSize(10);
 
-  doc.save(`PlaySkratch_Coach_Report_${latest.date}.pdf`);
+    const recentHcp = hcpLog.slice().reverse().slice(0, 5);
+    if (recentHcp.length === 0) {
+      doc.text("No handicap entries.", 10, y); y += 6;
+    } else {
+      recentHcp.forEach(h => {
+        doc.text(`${h.date} — Index: ${Number(h.index).toFixed(1)}`, 10, y);
+        y += 6;
+        if (y > 270) { doc.addPage(); y = 12; }
+      });
     }
 
-    function showRoundHistory() {
-  const container = document.getElementById('roundHistory');
-  container.innerHTML = '';
-  const rounds = JSON.parse(localStorage.getItem('rounds') || '[]').reverse();
-  if (rounds.length === 0) {
-    container.innerHTML = '<p>No rounds logged yet.</p>';
-    return;
-  }
-  rounds.forEach((r, index) => {
-    let total = 0;
-    let front = 0;
-    let back = 0;
-    r.holes.forEach((h, i) => {
-      const score = parseInt(h.score) || 0;
-      total += score;
-      if (i < 9) front += score;
-      else back += score;
-    });
-    const div = document.createElement('div');
-    div.innerHTML = `<strong>${r.date}</strong> — ${r.course || 'Unknown Course'}<br>
-      Front 9: ${front} | Back 9: ${back} | Total: ${total}`;
-    const btn = document.createElement('button');
-    btn.textContent = '🗑️';
-    btn.style.margin = '0.5rem 0';
-    btn.onclick = () => deleteRound(index);
-    div.appendChild(document.createElement('br'));
-    div.appendChild(btn);
-    div.appendChild(document.createElement('hr'));
-    container.appendChild(div);
-  });
-}
+    // Handicap chart (last 10)
+    const last10 = hcpLog.slice().reverse().slice(0, 10);
+    if (last10.length >= 2) {
+      const chartCanvas = document.createElement("canvas");
+      chartCanvas.width = 600;
+      chartCanvas.height = 260;
+      document.body.appendChild(chartCanvas);
 
-function saveHandicap() {
-  const date = document.getElementById('hcpDate').value;
-  const index = parseFloat(document.getElementById('hcpIndex').value);
-  if (!date || isNaN(index)) {
-    alert('Please enter both date and handicap index.');
-    return;
-  }
-  const hcpLog = JSON.parse(localStorage.getItem('handicap') || '[]');
-  hcpLog.push({ date, index });
-  localStorage.setItem('handicap', JSON.stringify(hcpLog));
-  alert('Handicap logged!');
-  showHandicapHistory();
-}
+      const ctx = chartCanvas.getContext("2d");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: last10.map(h => h.date),
+          datasets: [{
+            label: "Handicap Index",
+            data: last10.map(h => h.index),
+            tension: 0.3,
+            fill: true,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: false }
+          }
+        }
+      });
 
-function showHandicapHistory() {
-  const container = document.getElementById('handicapHistory');
-  container.innerHTML = '';
-  const log = JSON.parse(localStorage.getItem('handicap') || '[]').reverse();
-  if (log.length === 0) {
-    container.innerHTML = '<p>No handicap entries yet.</p>';
-    return;
-  }
-  log.forEach(entry => {
-    const div = document.createElement('div');
-    div.innerHTML = `<strong>${entry.date}</strong> – Index: ${entry.index.toFixed(1)}<hr>`;
-    container.appendChild(div);
-  });
-}
+      await new Promise(r => setTimeout(r, 450));
+      const chartImg = chartCanvas.toDataURL("image/png");
 
-function fillCheadlePar() {
-  const cheadlePar = [4,3,4,4,3,4,3,4,3,4,3,4,4,3,4,3,4,3];
-  cheadlePar.forEach((p, i) => {
-    const input = document.getElementById(`par${i + 1}`);
-    if (input) input.value = p;
-  });
-}
+      doc.addPage();
+      doc.setFontSize(12);
+      doc.text("Handicap Index Trend (Last 10)", 10, 12);
+      doc.addImage(chartImg, "PNG", 10, 20, 190, 82);
 
-function deleteRound(index) {
-  const rounds = JSON.parse(localStorage.getItem('rounds') || '[]');
-  if (!confirm(`Delete round from ${rounds[index].date}?`)) return;
-  rounds.splice(index, 1);
-  localStorage.setItem('rounds', JSON.stringify(rounds));
-  showRoundHistory();
-}
-
-window.onload = function() {
-      showPracticeSessions();
-      buildHoleInputs();
-      showRoundHistory();
-      showHandicapHistory();
+      document.body.removeChild(chartCanvas);
     }
-  </script>
+
+    const fileDate = (latest.date || todayISO());
+    doc.save(`ForeThought_Coach_Report_${fileDate}.pdf`);
+  }
+
+  // ---------------------------
+  // Boot
+  // ---------------------------
+  window.onload = function() {
+    // Default dates
+    document.getElementById("lessonDate").value = todayISO();
+    document.getElementById("roundDate").value = todayISO();
+    document.getElementById("hcpDate").value = todayISO();
+
+    // Populate UI
+    showLessons();
+    showRoundHistory();
+    showHandicapHistory();
+    loadYardageBookIntoEditor();
+
+    // Holes stay empty until selection
+    document.getElementById("holesContainer").innerHTML = "";
+  };
+</script>
 </body>
 </html>
